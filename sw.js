@@ -1,5 +1,5 @@
 /* sw.js */
-const SHELL = 'dc-shell-v6'; // bump to v7 if you change caching later
+const SHELL = 'dc-shell-v13'; // bump to v13 if you change caching later
 const DATA  = 'dc-data-v1';
 
 self.addEventListener('install', (e) => {

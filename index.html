@@ -23,6 +23,7 @@
   --shadow-1:0 1px 3px rgba(0,0,0,.06);
   --shadow-2:0 6px 18px rgba(0,0,0,.10);
   --font: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --railW: clamp(300px, 26vw, 420px); /* more room without blowing up on big screens */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -42,7 +43,7 @@ body{
 
 @media (min-width: 1024px){
   .layout{
-    grid-template-columns: minmax(640px, 3fr) minmax(320px, 1fr); /* ~75% / 25% */
+    grid-template-columns: 1fr var(--railW);
     align-items:start;
   }
   .rail > .card{
@@ -61,6 +62,7 @@ body{
 .tag[aria-pressed="true"]{ background:var(--pill); }
 .tag-sage{ background:var(--pill); color:var(--sepia); }
 .status-banner{ display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--pill); border:1px solid var(--border); color:var(--sepia); border-radius:22px; padding:10px 14px; box-shadow:var(--shadow-1); }
+.status-banner.is-sticky{ position: sticky; top: 12px; z-index: 20; backdrop-filter: saturate(1.1) blur(6px); }
 .status-left{ display:flex; align-items:center; gap:10px; }
 .status-left .dot{ width:8px; height:8px; background:var(--sage); border-radius:999px; display:inline-block; }
 .status-left b{ font-weight:700; }
@@ -71,6 +73,7 @@ body{
 .btn:active{ transform:translateY(1px) }
 .btn-primary{ background:var(--sage); color:#fff; }
 .btn-ghost{ background:transparent; border:1px solid var(--border); }
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .hint{ color:var(--muted); font-size:15px; margin-top:8px; }
 
 /* ---- Weather ---- */
@@ -82,6 +85,10 @@ body{
 .mini .cell{ background:#FAF9F7; border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
 .mini .t{ font-size:12px; color:var(--muted); }
 .mini .v{ font-weight:700; }
+.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .mini{ opacity:.5; }
+.weather-hero.loading .temp::after{
+  content:'…'; margin-left:6px; font-weight:700; opacity:.8;
+}
 
 /* ---- Leave plan ---- */
 .settings-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -94,20 +101,30 @@ body{
 .step{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;position:relative}
 .step::before{content:"";position:absolute;left:31px;top:-14px;bottom:-14px;width:2px;background:var(--border)}
 .step:first-child::before{display:none}
-.time-node{width:56px;height:56px;border-radius:999px;background:#FFF;border:1px solid var(--border);box-shadow:var(--shadow-1);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.time-node{width:44px;height:44px;border-radius:999px;background:#FFF;border:1px solid var(--border);box-shadow:var(--shadow-1);display:flex;flex-direction:column;align-items:center;justify-content:center}
 .time-node .hhmm{font-weight:800}
 .time-node .ampm{font-size:11px;color:var(--muted);margin-top:-2px}
-.cardlet{background:#FAF9F7;border:1px solid var(--border);border-radius:16px;min-height:64px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cardlet .label{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cardlet{background:#FAF9F7;border:1px solid var(--border);border-radius:16px;min-height:64px;padding:10px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cardlet .meta{ display:block; margin-top:2px; }
+.cardlet .label{font-weight:600;white-space:normal;overflow:visible;text-overflow:clip}
 .meta{font-size:13px;color:var(--muted)}
-.step.past .cardlet{opacity:.6;text-decoration:line-through}
-.step.now .cardlet{border-color:color-mix(in oklab,var(--sage) 40%, var(--border));box-shadow:0 0 0 2px color-mix(in oklab,var(--sage) 25%, transparent)}
+.step.past .cardlet{opacity:.6}
+.step.now .cardlet{border-color:color-mix(in oklab,var(--sage) 40%, var(--border));box-shadow:0 0 0 2px color-mix(in oklab,var(--sage) 25%, transparent);transform:translateY(-1px);}
+.step.now .cardlet::after{
+  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
+  box-shadow: 0 0 0 2px color-mix(in oklab,var(--sage) 35%, transparent);
+}
 .step.done .time-node{background:var(--sage);color:#fff;border-color:var(--sage)}
+.step.done .cardlet{opacity:.6;text-decoration:line-through}
+.timeline.dense{ gap:8px }
+.timeline.dense .cardlet{ min-height:48px }
+.timeline.dense .time-node{ width:40px;height:40px }
+.cardlet .actions{ display:flex; gap:6px; margin-left:auto; }
 
 /* ---- Backpacks ---- */
 .backpack-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
 .backpack-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--pad)}
-.pack-row{ display:grid; grid-template-columns: 28px 1fr; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#FAF9F7; }
+.pack-row{ display:grid; grid-template-columns: 28px 1fr 28px; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#FAF9F7; }
 .pack-row + .pack-row{ margin-top:10px; }
 .pack-row input[type="checkbox"]{ width:20px; height:20px; }
 .pack-row.checked{ background:#EEF7F0; border-color:#D6F0DB; }
@@ -190,7 +207,8 @@ dialog.modal{
             <div style="display:flex;align-items:center;gap:8px">
               <div class="tag tag-sage" id="wxLocation">Hamilton</div>
               <button class="btn btn-ghost" id="wxRefresh" aria-label="Refresh weather" type="button">Refresh</button>
-            </div>
+              <button class="btn btn-ghost" id="wxUseLoc" aria-label="Use my location">Use location</button>
+              </div>
           </header>
           <div class="now"><div class="temp" id="wxNow">--°</div><div class="cond" id="wxCond">—</div></div>
           <div class="stats">
@@ -268,6 +286,10 @@ dialog.modal{
         <section class="card" aria-label="Morning timeline">
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-ghost" id="addTask">+ Task</button>
+              <button class="btn btn-ghost" id="toggleDense">Dense</button>
+            </div>
           </header>
           <div class="timeline" id="timeline"></div>
         </section>
@@ -328,6 +350,8 @@ dialog.modal{
     meta:{lastOpen:todayLocalISO()}
   };
 
+  const PACK_DEFAULTS = ['Lunch','Love note','Water bottle','Forms','Agenda'];
+
   // ---------- State load/migrate ----------
   function migrate(s){
     const out=structuredClone(DEFAULT_STATE);
@@ -372,6 +396,7 @@ dialog.modal{
   // ---------- Boot ----------
   let S=load();
   dailyRollover();
+  ensureBackpackDefaults(); save();
 
   // ---------- Elements ----------
   const el={
@@ -381,12 +406,15 @@ dialog.modal{
     tLeave:document.getElementById('tLeave'),
     add5:document.getElementById('add5'),
     wx:{ loc:document.getElementById('wxLocation'), now:document.getElementById('wxNow'), cond:document.getElementById('wxCond'), hi:document.getElementById('wxHi'), lo:document.getElementById('wxLo'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing') },
+    wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
     commute:document.getElementById('commute'),
     shoesLead:document.getElementById('shoesLead'),
     schoolOut:document.getElementById('schoolOut'),
     schoolState:document.getElementById('schoolState'),
     timeline:document.getElementById('timeline'),
+    addTask:document.getElementById('addTask'),
+    toggleDense:document.getElementById('toggleDense'),
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
     exportBtn:document.getElementById('exportBtn'),
@@ -404,6 +432,9 @@ dialog.modal{
     modalClose:document.getElementById('modalClose')
   };
 
+  const status = document.querySelector('.status-banner');
+  if (status) status.classList.add('is-sticky');
+
   // ---------- Init UI ----------
   el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
@@ -417,6 +448,17 @@ dialog.modal{
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
   el.exportBtn.onclick=exportJSON;
   const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
+  if (el.wxUseLoc) {
+    el.wxUseLoc.onclick=()=>{
+      if (!navigator.geolocation) { alert('Geolocation not available'); return; }
+      navigator.geolocation.getCurrentPosition(pos=>{
+        S.settings.lat = pos.coords.latitude;
+        S.settings.lon = pos.coords.longitude;
+        S.settings.place = 'Current';
+        save(); fetchWeather();
+      }, ()=>alert('Could not get location.'));
+    };
+  }
   el.quickAdd.onclick=()=>{const t=prompt('Event title for today?'); if(!t) return; const id='e'+Math.random().toString(36).slice(2,8); const d=todayLocalISO(); S.events.push({id,date:d,title:t,tags:[]}); save(); toast('Added: '+t)};
 
   el.schoolChip.addEventListener('click', toggleSchoolChip);
@@ -431,6 +473,8 @@ dialog.modal{
   el.onyxAddEvent.onclick=()=>addRuleInteractive('onyx');
   el.pereAddEvent.onclick=()=>addRuleInteractive('peregrine');
   el.modalClose.onclick=()=>el.modal.close();
+  if (el.addTask) el.addTask.onclick = addTaskInteractive;
+  if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
 
   recomputeTimes();
   renderTimeline();
@@ -448,6 +492,7 @@ dialog.modal{
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
 
   async function fetchWeather(){
+    document.querySelector('.weather-hero')?.classList.add('loading');
     const {lat,lon}=S.settings; const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
     const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode',daily:'temperature_2m_max,temperature_2m_min'});
     const url='https://api.open-meteo.com/v1/forecast?'+params.toString();
@@ -458,6 +503,7 @@ dialog.modal{
       S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
       save(); el.wx.cached.hidden=true
     } else { el.wx.cached.hidden=false }
+    document.querySelector('.weather-hero')?.classList.remove('loading');
     renderWeather(); recomputeTimes()
   }
 
@@ -535,7 +581,8 @@ dialog.modal{
     const SH=shoesHM||parseHM24(el.tShoes.textContent);
     el.timeline.innerHTML='';
     const frag=document.createDocumentFragment();
-    S.todos.forEach(t=>{
+    const tasks = [...S.todos].sort((a,b)=> taskStartMinutes(L,SH,a) - taskStartMinutes(L,SH,b));
+    tasks.forEach(t=>{
       let start=null,end=null,label='';
       if(t.range){ const parts=t.range.replace('–','-').split('-'); start=parseHM(parts[0]); end=parseHM(parts[1]); label=formatRange12(t.range); }
       else if(t.abs){ start=parseHM(t.abs); end=start; label=hmToStr12(start); }
@@ -557,10 +604,24 @@ dialog.modal{
         card.append(art,info);
         card.onclick=()=>{ if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
           t.done=!t.done; save(); step.classList.toggle('done',t.done); updateMedStateFor(step); };
+        const actions=document.createElement('div'); actions.className='actions';
+        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
+        del.onclick=()=>{ S.todos = S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        actions.appendChild(del); card.appendChild(actions);
       } else {
         card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false');
         card.innerHTML=`<span class="label">${escapeHtml(t.text)}</span><span class="meta">${label}</span>`;
         card.onclick=()=>{ t.done=!t.done; save(); step.classList.toggle('done',t.done); card.setAttribute('aria-checked',t.done?'true':'false') };
+        // right-side small actions
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const del = document.createElement('button');
+        del.className = 'btn btn-ghost btn-icon';
+        del.setAttribute('aria-label','Delete');
+        del.textContent = '×';
+        del.onclick = ()=>{ S.todos = S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        actions.appendChild(del);
+        card.appendChild(actions);
       }
 
       step.appendChild(time); step.appendChild(card); frag.appendChild(step);
@@ -596,10 +657,36 @@ dialog.modal{
         const row=document.createElement('div'); row.className='pack-row'+(item.done?' checked':'');
         const cb=document.createElement('input'); cb.type='checkbox'; cb.id=`cb-${key}-${idx}`; cb.checked=item.done; cb.setAttribute('aria-labelledby',`txt-${key}-${idx}`);
         cb.onchange=()=>{ item.done=cb.checked; row.classList.toggle('checked',item.done); save() };
-        const txt=document.createElement('div'); txt.id=`txt-${key}-${idx}`; txt.textContent=item.text; txt.contentEditable='true'; txt.oninput=()=>{ item.text=txt.textContent; save() };
-        row.appendChild(cb); row.appendChild(txt); listFrag.appendChild(row);
+
+        const txt=document.createElement('div'); txt.id=`txt-${key}-${idx}`; txt.textContent=item.text; txt.contentEditable='true';
+        txt.oninput=()=>{ item.text=txt.textContent; save() };
+
+        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete item'); del.textContent='×';
+        del.onclick=()=>{ S.backpacks[key].splice(idx,1); save(); renderBackpacks(); };
+
+        row.append(cb, txt, del);
+        listFrag.appendChild(row);
       });
-      card.appendChild(listFrag); fragAll.appendChild(card);
+
+      card.appendChild(listFrag);
+      const controls=document.createElement('div');
+      controls.style.display='flex'; controls.style.gap='8px'; controls.style.marginTop='10px';
+
+      const addBtn=document.createElement('button');
+      addBtn.className='btn btn-ghost'; addBtn.textContent='+ Add item';
+      addBtn.onclick=()=>{ const t=prompt('New item text'); if(!t) return;
+        S.backpacks[key].push({text:t.trim(),done:false}); save(); renderBackpacks();
+      };
+
+      const defBtn=document.createElement('button');
+      defBtn.className='btn btn-ghost'; defBtn.textContent='Restore defaults';
+      defBtn.onclick=()=>{ if(!confirm('Replace this list with defaults?')) return;
+        S.backpacks[key]=PACK_DEFAULTS.map(x=>({text:x,done:false})); save(); renderBackpacks();
+      };
+
+      controls.append(addBtn, defBtn);
+      card.appendChild(controls);
+      fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
     const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":'School day';
@@ -686,6 +773,35 @@ dialog.modal{
     save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks();
   }
 
+  function addTaskInteractive(){
+    const text = prompt('Task text','Brush teeth');
+    if (!text) return;
+
+    // Mode examples: "07:05", "leave -10", "shoes +0", "range 06:45-07:15"
+    const when = prompt('When? Examples: "07:05", "leave -10", "shoes +0", or "range 06:45-07:15"','leave -10');
+    if (!when) return;
+
+    let task=null;
+    const w = when.trim().toLowerCase();
+
+    if (w.startsWith('range ')){
+      const r = w.replace(/^range\s+/,'').replace('–','-');
+      if (!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) { alert('Range must be HH:MM-HH:MM'); return; }
+      task = {id:'t'+Math.random().toString(36).slice(2), text, done:false, range:r};
+    } else if (/^\d{2}:\d{2}$/.test(w)){
+      task = {id:'t'+Math.random().toString(36).slice(2), text, done:false, abs:w};
+    } else if (w.startsWith('leave') || w.startsWith('shoes')){
+      const [rel, offStr] = w.split(/\s+/);
+      const offset = parseInt(offStr||'0',10);
+      task = {id:'t'+Math.random().toString(36).slice(2), text, done:false, rel, offset};
+    } else {
+      alert('Unrecognized time format.');
+      return;
+    }
+
+    S.todos.push(task); save(); recomputeTimes(); renderTimeline();
+  }
+
   // ---------- Utilities ----------
   function clothingFor(code,tempC,pop,wind){ if(isSnow(code)||(isRain(code)&&tempC<=1)) return wind<28?'Hat, gloves, boots; umbrella OK':'Hat, gloves, boots; no umbrella (wind)'; if(isRain(code)){ const umb=wind<28?' + umbrella':' (no umbrella: wind)'; const hat=tempC<=15?' + hat':''; return 'Rain jacket, rain boots'+umb+hat } if(tempC<=10) return 'Hat + gloves + warm shoes'; if(tempC<=15) return 'Hat + running shoes'; return 'Running shoes' }
   function isRain(code){ return [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(+code) }
@@ -700,10 +816,26 @@ dialog.modal{
   function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
   function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
   function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
-  function formatRange12(rangeStr){ const parts = rangeStr.replace('–','-').split('-'); const A=parseHM(parts[0]); const B=parseHM(parts[1]||parts[0]); const sA=hmToStr12(A); const sB=hmToStr12(B); const pA=sA.slice(-2), pB=sB.slice(-2); const tA=sA.slice(0,-3), tB=sB.slice(0,-3); return pA===pB ? `${tA}–${tB} ${pA}` : `${tA} ${pA}–${tB} ${pB}`; }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
+function formatRange12(rangeStr){ const parts = rangeStr.replace('–','-').split('-'); const A=parseHM(parts[0]); const B=parseHM(parts[1]||parts[0]); const sA=hmToStr12(A); const sB=hmToStr12(B); const pA=sA.slice(-2), pB=sB.slice(-2); const tA=sA.slice(0,-3), tB=sB.slice(0,-3); return pA===pB ? `${tA}–${tB} ${pA}` : `${tA} ${pA}–${tB} ${pB}`; }
+function taskStartMinutes(L,SH,t){
+  if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
+  if (t.abs)  return hmToMinutes(parseHM(t.abs));
+  if (t.rel==='leave') return hmToMinutes(L)+(t.offset||0);
+  if (t.rel==='shoes') return hmToMinutes(SH)+(t.offset||0);
+  return 24*60+999;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
   const capitalize=s=>s? s[0].toUpperCase()+s.slice(1):'';
   function toISODate(s){ const t=s.trim(); if(/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; if(/^\d{2}[-/]\d{2}([-/]\d{4})?$/.test(t)){ const [m,d,y]=t.replace(/\//g,'-').split('-'); const yr = y && y.length===4 ? +y : new Date().getFullYear(); return `${yr}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` } return null }
+
+  function ensureBackpackDefaults(){
+    const kids=['onyx','peregrine'];
+    kids.forEach(k=>{
+      if(!S.backpacks[k] || !Array.isArray(S.backpacks[k])) S.backpacks[k]=[];
+      const allEmpty = S.backpacks[k].length===0 || S.backpacks[k].every(it => !it || !it.text || it.text.trim()==='');
+      if(allEmpty) S.backpacks[k] = PACK_DEFAULTS.map(t=>({text:t,done:false}));
+    });
+  }
 
   function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
   function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
