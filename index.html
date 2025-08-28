@@ -14,16 +14,16 @@
   --mauve:#A1918B;
   --ink:#2E2A27;
   --muted:#7A6D66;
-  --border:#E7DED4;
+  --border:#EDE5DB;
   --pill:#EEF2EA;
   --gap:16px;
   --pad:16px;
-  --radius:16px;
+  --radius:20px;
   --row:56px;
-  --shadow-1:0 1px 3px rgba(0,0,0,.06);
-  --shadow-2:0 6px 18px rgba(0,0,0,.10);
+  --shadow-1:0 1px 2px rgba(0,0,0,.05);
+  --shadow-2:0 8px 24px rgba(0,0,0,.08);
   --font: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --railW: clamp(300px, 26vw, 420px); /* more room without blowing up on big screens */
+  --railW: clamp(320px, 26vw, 420px); /* more room without blowing up on big screens */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -62,11 +62,14 @@ body{
 .tag[aria-pressed="true"]{ background:var(--pill); }
 .tag-sage{ background:var(--pill); color:var(--sepia); }
 .status-banner{ display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--pill); border:1px solid var(--border); color:var(--sepia); border-radius:22px; padding:10px 14px; box-shadow:var(--shadow-1); }
-.status-banner.is-sticky{ position: sticky; top: 12px; z-index: 20; backdrop-filter: saturate(1.1) blur(6px); }
+.status-banner.is-sticky{ position:sticky; top:12px; z-index:20; backdrop-filter:saturate(1.05) blur(6px); }
 .status-left{ display:flex; align-items:center; gap:10px; }
 .status-left .dot{ width:8px; height:8px; background:var(--sage); border-radius:999px; display:inline-block; }
 .status-left b{ font-weight:700; }
 .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
+.card{ background:#FFFEFC; }
+.tag{ background:#FBF6F1; border-color:#EADFD3; }
+.tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
 .card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
 .card-title{ font-weight:700; font-size:22px; }
 .btn{ font-weight:700; border-radius:999px; padding:8px 14px; border:1px solid transparent; background:transparent; color:var(--sepia); cursor:pointer; }
@@ -75,6 +78,7 @@ body{
 .btn-ghost{ background:transparent; border:1px solid var(--border); }
 .btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .hint{ color:var(--muted); font-size:15px; margin-top:8px; }
+:focus-visible{ outline:2px solid #7FB086; outline-offset:2px; border-radius:12px }
 
 /* ---- Weather ---- */
 .weather-hero .now{ display:flex; align-items:baseline; gap:10px; }
@@ -97,30 +101,27 @@ body{
 .switch{ display:flex; align-items:center; gap:10px; }
 
 /* ---- Timeline ---- */
-.timeline{display:flex;flex-direction:column;gap:14px;position:relative}
+.timeline{display:flex;flex-direction:column;gap:12px;position:relative}
+.timeline.dense{ gap:8px }
 .step{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;position:relative}
 .step::before{content:"";position:absolute;left:31px;top:-14px;bottom:-14px;width:2px;background:var(--border)}
 .step:first-child::before{display:none}
 .time-node{width:44px;height:44px;border-radius:999px;background:#FFF;border:1px solid var(--border);box-shadow:var(--shadow-1);display:flex;flex-direction:column;align-items:center;justify-content:center}
-.time-node .hhmm{font-weight:800}
+.time-node .hhmm{ font-weight:800; font-size:15px }
 .time-node .ampm{font-size:11px;color:var(--muted);margin-top:-2px}
 .cardlet{background:#FAF9F7;border:1px solid var(--border);border-radius:16px;min-height:64px;padding:10px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.cardlet .meta{ display:block; margin-top:2px; }
-.cardlet .label{font-weight:600;white-space:normal;overflow:visible;text-overflow:clip}
+.cardlet .label{ font-weight:600; white-space:normal; }
+.cardlet .meta{ display:block; margin-top:2px; color:var(--muted) }
 .meta{font-size:13px;color:var(--muted)}
 .step.past .cardlet{opacity:.6}
-.step.now .cardlet{border-color:color-mix(in oklab,var(--sage) 40%, var(--border));box-shadow:0 0 0 2px color-mix(in oklab,var(--sage) 25%, transparent);transform:translateY(-1px);}
-.step.now .cardlet::after{
-  content:""; position:absolute; inset:-2px; border-radius:inherit; pointer-events:none;
-  box-shadow: 0 0 0 2px color-mix(in oklab,var(--sage) 35%, transparent);
-}
+.step.now .cardlet{ border-color:color-mix(in oklab,var(--sage) 40%, var(--border)); box-shadow:0 0 0 2px color-mix(in oklab,var(--sage) 28%, transparent) }
 .step.done .time-node{background:var(--sage);color:#fff;border-color:var(--sage)}
 .step.done .cardlet{opacity:.6;text-decoration:line-through}
 
 /* ---- Backpacks ---- */
 .backpack-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
 .backpack-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--pad)}
-.pack-row{ display:grid; grid-template-columns: 28px 1fr 28px; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#FAF9F7; }
+.pack-row{ display:grid; grid-template-columns:28px 1fr 28px; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#F9F7F4; }
 .pack-row + .pack-row{ margin-top:10px; }
 .pack-row input[type="checkbox"]{ width:20px; height:20px; }
 .pack-row.checked{ background:#EEF7F0; border-color:#D6F0DB; }
@@ -133,8 +134,8 @@ body{
 .subtle{ color:var(--muted); }
 
 /* ---- Med card (SVG bottle + states) ---- */
-.cardlet.med{ 
-  min-height: 96px; border-radius: 20px; display:grid; grid-template-columns: 64px 1fr; align-items:center;
+.cardlet.med{
+  min-height: 96px; border-radius: 20px; display:grid; grid-template-columns: 64px 1fr; align-items:center; background:#FFFDFC;
 }
 .med .art{
   width:56px;height:56px;border-radius:14px;border:1px solid var(--border);
@@ -144,6 +145,9 @@ body{
 .med .art svg{ width:32px;height:32px; display:block; }
 .med .label{ font-weight:800; }
 .med .meta{ font-size:14px; color:var(--muted); }
+.med.armed .cardlet{ background:#F5FAF6; border-color:#D9EAD9; }
+.med.due .cardlet{ background:#FFF8E6; border-color:#F0E1B6; }
+.med.late .cardlet{ background:#FFF1F1; border-color:#F1C8C8; }
 .med.armed .art{ animation: medPulse 1500ms ease-in-out infinite; color: var(--sage); }
 .med.due .art{ animation: medGrow 900ms ease-in-out infinite alternate; color: var(--sage); }
 .med.late{ box-shadow: 0 0 0 3px color-mix(in oklab, var(--mauve) 38%, transparent); }
@@ -282,6 +286,10 @@ dialog.modal{
         <section class="card" aria-label="Morning timeline">
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-ghost" id="addTask">+ Task</button>
+              <button class="btn btn-ghost" id="toggleDense">Dense</button>
+            </div>
           </header>
           <div class="timeline" id="timeline"></div>
         </section>
@@ -405,6 +413,8 @@ dialog.modal{
     schoolOut:document.getElementById('schoolOut'),
     schoolState:document.getElementById('schoolState'),
     timeline:document.getElementById('timeline'),
+    addTask:document.getElementById('addTask'),
+    toggleDense:document.getElementById('toggleDense'),
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
     exportBtn:document.getElementById('exportBtn'),
@@ -422,8 +432,7 @@ dialog.modal{
     modalClose:document.getElementById('modalClose')
   };
 
-  const status = document.querySelector('.status-banner');
-  if (status) status.classList.add('is-sticky');
+  document.querySelector('.status-banner')?.classList.add('is-sticky');
 
   // ---------- Init UI ----------
   el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -463,6 +472,8 @@ dialog.modal{
   el.onyxAddEvent.onclick=()=>addRuleInteractive('onyx');
   el.pereAddEvent.onclick=()=>addRuleInteractive('peregrine');
   el.modalClose.onclick=()=>el.modal.close();
+  if (el.addTask) el.addTask.onclick = addTaskInteractive;
+  if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
 
   recomputeTimes();
   renderTimeline();
@@ -567,9 +578,10 @@ dialog.modal{
   function renderTimeline(leaveHM,shoesHM){
     const L=leaveHM||parseHM24(el.tLeave.textContent);
     const SH=shoesHM||parseHM24(el.tShoes.textContent);
+    const tasks=[...S.todos].sort((a,b)=> taskStartMinutes(L,SH,a) - taskStartMinutes(L,SH,b));
     el.timeline.innerHTML='';
     const frag=document.createDocumentFragment();
-    S.todos.forEach(t=>{
+    tasks.forEach(t=>{
       let start=null,end=null,label='';
       if(t.range){ const parts=t.range.replace('–','-').split('-'); start=parseHM(parts[0]); end=parseHM(parts[1]); label=formatRange12(t.range); }
       else if(t.abs){ start=parseHM(t.abs); end=start; label=hmToStr12(start); }
@@ -589,11 +601,19 @@ dialog.modal{
         const art=document.createElement('div'); art.className='art'; art.innerHTML=BOTTLE_SVG;
         const info=document.createElement('div'); info.innerHTML=`<div class="label">${escapeHtml(t.text)}</div><div class="meta">${label}</div>`;
         card.append(art,info);
+        const actions=document.createElement('div'); actions.className='actions';
+        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
+        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        actions.appendChild(del); card.appendChild(actions);
         card.onclick=()=>{ if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
           t.done=!t.done; save(); step.classList.toggle('done',t.done); updateMedStateFor(step); };
       } else {
         card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false');
         card.innerHTML=`<span class="label">${escapeHtml(t.text)}</span><span class="meta">${label}</span>`;
+        const actions=document.createElement('div'); actions.className='actions';
+        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
+        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        actions.appendChild(del); card.appendChild(actions);
         card.onclick=()=>{ t.done=!t.done; save(); step.classList.toggle('done',t.done); card.setAttribute('aria-checked',t.done?'true':'false') };
       }
 
@@ -718,6 +738,17 @@ dialog.modal{
     save(); renderRuleChips(); toast('Event saved');
   }
 
+  function addTaskInteractive(){
+    const text=prompt('Task text','Brush teeth'); if(!text) return;
+    const when=prompt('When? Examples: "07:05", "leave -10", "shoes +0", or "range 06:45-07:15"','leave -10'); if(!when) return;
+    const w=when.trim().toLowerCase(); let task=null;
+    if (w.startsWith('range ')){ const r=w.replace(/^range\s+/,'').replace('–','-'); if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) return alert('Use HH:MM-HH:MM'); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,range:r}; }
+    else if (/^\d{2}:\d{2}$/.test(w)){ task={id:'t'+Math.random().toString(36).slice(2),text,done:false,abs:w}; }
+    else if (w.startsWith('leave')||w.startsWith('shoes')){ const [rel,offStr]=w.split(/\s+/); const offset=parseInt(offStr||'0',10); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,rel,offset}; }
+    else return alert('Unrecognized time format.');
+    S.todos.push(task); save(); recomputeTimes(); renderTimeline();
+  }
+
   // ---------- Schedules (images) ----------
   async function importSchedule(kid){
     try{
@@ -760,6 +791,13 @@ dialog.modal{
   function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
   function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
   function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
+  function taskStartMinutes(L,SH,t){
+    if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
+    if (t.abs)  return hmToMinutes(parseHM(t.abs));
+    if (t.rel==='leave') return hmToMinutes(L)+(t.offset||0);
+    if (t.rel==='shoes') return hmToMinutes(SH)+(t.offset||0);
+    return 24*60+999;
+  }
   function formatRange12(rangeStr){ const parts = rangeStr.replace('–','-').split('-'); const A=parseHM(parts[0]); const B=parseHM(parts[1]||parts[0]); const sA=hmToStr12(A); const sB=hmToStr12(B); const pA=sA.slice(-2), pB=sB.slice(-2); const tA=sA.slice(0,-3), tB=sB.slice(0,-3); return pA===pB ? `${tA}–${tB} ${pA}` : `${tA} ${pA}–${tB} ${pB}`; }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
   const capitalize=s=>s? s[0].toUpperCase()+s.slice(1):'';
