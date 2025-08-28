@@ -23,6 +23,7 @@
   --shadow-1:0 1px 3px rgba(0,0,0,.06);
   --shadow-2:0 6px 18px rgba(0,0,0,.10);
   --font: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --railW: 340px; /* ~1/4 of 1366px iPad width; tweak anytime */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -42,7 +43,7 @@ body{
 
 @media (min-width: 1024px){
   .layout{
-    grid-template-columns: minmax(640px, 3fr) minmax(320px, 1fr); /* ~75% / 25% */
+    grid-template-columns: 1fr var(--railW);
     align-items:start;
   }
   .rail > .card{
@@ -71,6 +72,7 @@ body{
 .btn:active{ transform:translateY(1px) }
 .btn-primary{ background:var(--sage); color:#fff; }
 .btn-ghost{ background:transparent; border:1px solid var(--border); }
+.btn-icon{ width:28px; height:28px; padding:0; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
 .hint{ color:var(--muted); font-size:15px; margin-top:8px; }
 
 /* ---- Weather ---- */
@@ -107,7 +109,7 @@ body{
 /* ---- Backpacks ---- */
 .backpack-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
 .backpack-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--pad)}
-.pack-row{ display:grid; grid-template-columns: 28px 1fr; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#FAF9F7; }
+.pack-row{ display:grid; grid-template-columns: 28px 1fr 28px; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#FAF9F7; }
 .pack-row + .pack-row{ margin-top:10px; }
 .pack-row input[type="checkbox"]{ width:20px; height:20px; }
 .pack-row.checked{ background:#EEF7F0; border-color:#D6F0DB; }
@@ -328,6 +330,8 @@ dialog.modal{
     meta:{lastOpen:todayLocalISO()}
   };
 
+  const PACK_DEFAULTS = ['Lunch','Love note','Water bottle','Forms','Agenda'];
+
   // ---------- State load/migrate ----------
   function migrate(s){
     const out=structuredClone(DEFAULT_STATE);
@@ -372,6 +376,7 @@ dialog.modal{
   // ---------- Boot ----------
   let S=load();
   dailyRollover();
+  ensureBackpackDefaults(); save();
 
   // ---------- Elements ----------
   const el={
@@ -596,10 +601,36 @@ dialog.modal{
         const row=document.createElement('div'); row.className='pack-row'+(item.done?' checked':'');
         const cb=document.createElement('input'); cb.type='checkbox'; cb.id=`cb-${key}-${idx}`; cb.checked=item.done; cb.setAttribute('aria-labelledby',`txt-${key}-${idx}`);
         cb.onchange=()=>{ item.done=cb.checked; row.classList.toggle('checked',item.done); save() };
-        const txt=document.createElement('div'); txt.id=`txt-${key}-${idx}`; txt.textContent=item.text; txt.contentEditable='true'; txt.oninput=()=>{ item.text=txt.textContent; save() };
-        row.appendChild(cb); row.appendChild(txt); listFrag.appendChild(row);
+
+        const txt=document.createElement('div'); txt.id=`txt-${key}-${idx}`; txt.textContent=item.text; txt.contentEditable='true';
+        txt.oninput=()=>{ item.text=txt.textContent; save() };
+
+        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete item'); del.textContent='×';
+        del.onclick=()=>{ S.backpacks[key].splice(idx,1); save(); renderBackpacks(); };
+
+        row.append(cb, txt, del);
+        listFrag.appendChild(row);
       });
-      card.appendChild(listFrag); fragAll.appendChild(card);
+
+      card.appendChild(listFrag);
+      const controls=document.createElement('div');
+      controls.style.display='flex'; controls.style.gap='8px'; controls.style.marginTop='10px';
+
+      const addBtn=document.createElement('button');
+      addBtn.className='btn btn-ghost'; addBtn.textContent='+ Add item';
+      addBtn.onclick=()=>{ const t=prompt('New item text'); if(!t) return;
+        S.backpacks[key].push({text:t.trim(),done:false}); save(); renderBackpacks();
+      };
+
+      const defBtn=document.createElement('button');
+      defBtn.className='btn btn-ghost'; defBtn.textContent='Restore defaults';
+      defBtn.onclick=()=>{ if(!confirm('Replace this list with defaults?')) return;
+        S.backpacks[key]=PACK_DEFAULTS.map(x=>({text:x,done:false})); save(); renderBackpacks();
+      };
+
+      controls.append(addBtn, defBtn);
+      card.appendChild(controls);
+      fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
     const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":'School day';
@@ -704,6 +735,15 @@ dialog.modal{
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
   const capitalize=s=>s? s[0].toUpperCase()+s.slice(1):'';
   function toISODate(s){ const t=s.trim(); if(/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; if(/^\d{2}[-/]\d{2}([-/]\d{4})?$/.test(t)){ const [m,d,y]=t.replace(/\//g,'-').split('-'); const yr = y && y.length===4 ? +y : new Date().getFullYear(); return `${yr}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` } return null }
+
+  function ensureBackpackDefaults(){
+    const kids=['onyx','peregrine'];
+    kids.forEach(k=>{
+      if(!S.backpacks[k] || !Array.isArray(S.backpacks[k])) S.backpacks[k]=[];
+      const allEmpty = S.backpacks[k].length===0 || S.backpacks[k].every(it => !it || !it.text || it.text.trim()==='');
+      if(allEmpty) S.backpacks[k] = PACK_DEFAULTS.map(t=>({text:t,done:false}));
+    });
+  }
 
   function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
   function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
