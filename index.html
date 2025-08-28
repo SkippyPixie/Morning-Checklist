@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Command</title>
+<body style="font-family: -apple-system, system-ui, sans-serif; padding:24px">
+  <h1>Daily Command — scaffold</h1>
+  <p>If you see this on Cloudflare Pages, deploy is wired. Next step is dropping in the full app.</p>
+  <script>
+    function canUseSW(){
+      const isTop = self===top;
+      const isSecure = location.protocol==='https:' || location.hostname==='localhost';
+      return 'serviceWorker' in navigator && isTop && isSecure;
+    }
+    if (canUseSW()) { navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+  </script>
+</body>
+</html>
