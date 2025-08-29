@@ -8,13 +8,13 @@
   <style>
 :root{
   --parchment:#F6F1EB;
-  --card:#FFFFFF;
+  --card:#FFFEFC;
   --sepia:#5C4433;
   --sage:#9CAB86;
   --mauve:#A1918B;
   --ink:#2E2A27;
   --muted:#7A6D66;
-  --border:#EDE5DB;
+  --border:#E7DED4;
   --pill:#EEF2EA;
   --gap:16px;
   --pad:16px;
@@ -23,7 +23,9 @@
   --shadow-1:0 1px 2px rgba(0,0,0,.05);
   --shadow-2:0 8px 24px rgba(0,0,0,.08);
   --font: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --railW: clamp(320px, 26vw, 420px); /* more room without blowing up on big screens */
+  --railW: clamp(360px, 28vw, 460px); /* more room without blowing up on big screens */
+  --ring:#C7D7C5;
+  --soft:#F7F3EE;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -35,25 +37,25 @@ body{
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 
-/* ---- App layout: left main column + right rail timeline ---- */
+/* ---- App layout: grid with rail ---- */
 .app{ max-width:1200px; margin:0 auto; padding:24px var(--pad) 120px; }
-.layout{ display:grid; gap:var(--gap); }
-.main-col{ display:flex; flex-direction:column; gap:var(--gap); }
-.rail{ position:relative; }
+.layout{ display:flex; flex-direction:column; gap:var(--gap); }
 
+/* Two-column content grid under the sticky status */
 @media (min-width: 1024px){
   .layout{
+    display: grid;
     grid-template-columns: 1fr var(--railW);
-    align-items:start;
+    gap: var(--gap);
+    align-items: start;               /* important: start align, no stretching */
   }
-  .rail > .card{
+  /* Pin the right rail to column 2 and start at row 1, spanning all rows */
+  .layout > .rail{
+    grid-column: 2;
+    grid-row: 1 / span 999;
+    align-self: start;
     position: sticky;
-    top: 16px;
-    max-height: calc(100dvh - 32px);
-    display:flex; flex-direction:column;
-  }
-  .rail .timeline{
-    overflow:auto; /* independent scroll in the rail */
+    top: 12px;                        /* same top inset the status chip uses */
   }
 }
 
@@ -61,16 +63,10 @@ body{
 .tag{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-weight:600; border:1px solid var(--border); background:#FFFDF9; color:var(--sepia); cursor:pointer; }
 .tag[aria-pressed="true"]{ background:var(--pill); }
 .tag-sage{ background:var(--pill); color:var(--sepia); }
-.status-banner{ display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--pill); border:1px solid var(--border); color:var(--sepia); border-radius:22px; padding:10px 14px; box-shadow:var(--shadow-1); }
-.status-banner.is-sticky{ position:sticky; top:12px; z-index:20; backdrop-filter:saturate(1.05) blur(6px); }
-.status-left{ display:flex; align-items:center; gap:10px; }
-.status-left .dot{ width:8px; height:8px; background:var(--sage); border-radius:999px; display:inline-block; }
-.status-left b{ font-weight:700; }
 .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
-.card{ background:#FFFEFC; }
 .tag{ background:#FBF6F1; border-color:#EADFD3; }
 .tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
-.card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.card-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
 .card-title{ font-weight:700; font-size:22px; }
 .btn{ font-weight:700; border-radius:999px; padding:8px 14px; border:1px solid transparent; background:transparent; color:var(--sepia); cursor:pointer; }
 .btn:active{ transform:translateY(1px) }
@@ -78,18 +74,14 @@ body{
 .btn-ghost{ background:transparent; border:1px solid var(--border); }
 .btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .hint{ color:var(--muted); font-size:15px; margin-top:8px; }
-:focus-visible{ outline:2px solid #7FB086; outline-offset:2px; border-radius:12px }
+:focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px; }
 
 /* ---- Weather ---- */
 .weather-hero .now{ display:flex; align-items:baseline; gap:10px; }
 .weather-hero .temp{ font-size:40px; font-weight:800; }
 .weather-hero .cond{ font-size:17px; color:var(--muted); }
 .weather-hero .stats{ display:flex; gap:16px; color:var(--muted); margin-top:6px; }
-.mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:12px; }
-.mini .cell{ background:#FAF9F7; border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
-.mini .t{ font-size:12px; color:var(--muted); }
-.mini .v{ font-weight:700; }
-.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .mini{ opacity:.5; }
+.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .weather-mini{ opacity:.5; }
 .weather-hero.loading .temp::after{
   content:'…'; margin-left:6px; font-weight:700; opacity:.8;
 }
@@ -100,64 +92,12 @@ body{
 .field input{ height:48px; width:100%; border-radius:12px; border:1px solid var(--border); padding:10px 12px; font:inherit; color:var(--sepia); background:#fff; }
 .switch{ display:flex; align-items:center; gap:10px; }
 
-/* ---- Timeline ---- */
-.timeline{display:flex;flex-direction:column;gap:12px;position:relative}
-.timeline.dense{ gap:8px }
-.step{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;position:relative}
-.step::before{content:"";position:absolute;left:31px;top:-14px;bottom:-14px;width:2px;background:var(--border)}
-.step:first-child::before{display:none}
-.time-node{width:44px;height:44px;border-radius:999px;background:#FFF;border:1px solid var(--border);box-shadow:var(--shadow-1);display:flex;flex-direction:column;align-items:center;justify-content:center}
-.time-node .hhmm{ font-weight:800; font-size:15px }
-.time-node .ampm{font-size:11px;color:var(--muted);margin-top:-2px}
-.cardlet{background:#FAF9F7;border:1px solid var(--border);border-radius:16px;min-height:64px;padding:10px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.cardlet .label{ font-weight:600; white-space:normal; }
-.cardlet .meta{ display:block; margin-top:2px; color:var(--muted) }
-.meta{font-size:13px;color:var(--muted)}
-.step.past .cardlet{opacity:.6}
-.step.now .cardlet{ border-color:color-mix(in oklab,var(--sage) 40%, var(--border)); box-shadow:0 0 0 2px color-mix(in oklab,var(--sage) 28%, transparent) }
-.step.done .time-node{background:var(--sage);color:#fff;border-color:var(--sage)}
-.step.done .cardlet{opacity:.6;text-decoration:line-through}
-
-/* ---- Backpacks ---- */
-.backpack-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
-.backpack-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--pad)}
-.pack-row{ display:grid; grid-template-columns:28px 1fr 28px; align-items:center; gap:10px; height:var(--row); border:1px solid var(--border); border-radius:12px; padding:0 12px; background:#F9F7F4; }
-.pack-row + .pack-row{ margin-top:10px; }
-.pack-row input[type="checkbox"]{ width:20px; height:20px; }
-.pack-row.checked{ background:#EEF7F0; border-color:#D6F0DB; }
-.pack-row [contenteditable]{ outline:none; }
 
 /* ---- Today strip ---- */
 .today-strip{ display:flex; justify-content:space-between; align-items:center; }
 .today-date{ font-size:28px; font-weight:900; }
 .today-tags{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .subtle{ color:var(--muted); }
-
-/* ---- Med card (SVG bottle + states) ---- */
-.cardlet.med{
-  min-height: 96px; border-radius: 20px; display:grid; grid-template-columns: 64px 1fr; align-items:center; background:#FFFDFC;
-}
-.med .art{
-  width:56px;height:56px;border-radius:14px;border:1px solid var(--border);
-  background:#FFF; display:flex;align-items:center;justify-content:center;
-  box-shadow: var(--shadow-1); color: var(--sepia);
-}
-.med .art svg{ width:32px;height:32px; display:block; }
-.med .label{ font-weight:800; }
-.med .meta{ font-size:14px; color:var(--muted); }
-.med.armed .cardlet{ background:#F5FAF6; border-color:#D9EAD9; }
-.med.due .cardlet{ background:#FFF8E6; border-color:#F0E1B6; }
-.med.late .cardlet{ background:#FFF1F1; border-color:#F1C8C8; }
-.med.armed .art{ animation: medPulse 1500ms ease-in-out infinite; color: var(--sage); }
-.med.due .art{ animation: medGrow 900ms ease-in-out infinite alternate; color: var(--sage); }
-.med.late{ box-shadow: 0 0 0 3px color-mix(in oklab, var(--mauve) 38%, transparent); }
-.med.due{ box-shadow: 0 0 0 3px color-mix(in oklab, var(--sage) 40%, transparent); }
-.med.done{ opacity:.6; text-decoration: line-through; }
-@keyframes medGrow { from{ transform:scale(1);} to{ transform:scale(1.12);} }
-@keyframes medPulse{ 0%{ transform:scale(1);} 60%{ transform:scale(1.06);} 100%{ transform:scale(1);} }
-@media (prefers-reduced-motion: reduce){
-  .med .art { animation: none !important; }
-}
 
 /* ---- Schedules & dialog ---- */
 .schedule-actions{ display:flex; gap:8px; flex-wrap:wrap; }
@@ -174,115 +114,339 @@ dialog.modal{
 
 /* Motion safe */
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{ transition:none !important; animation:none !important; } }
+/* === Tokens ============================================================= */
+:root{
+  /* palette */
+  --parchment:#F6F1EB;
+  --card:#FFFEFC;
+  --sepia:#4F3C2F;
+  --muted:#6E625B;
+  --sage:#7FB086;
+  --mauve:#9B8D88;
+  --border:#E6DBCE;
+  --pill:#EEF4EC;
+  --railW: clamp(360px, 28vw, 460px);
+  --ring:#C7D7C5;
+  --soft:#F7F3EE;
+  --ink:#2E2A27;
+
+  /* layout + type */
+  --gap:16px;
+  --pad:16px;
+  --radius:18px;
+  --shadow-1: 0 1px 2px rgba(20,16,12,.06);
+  --shadow-2: 0 10px 28px rgba(20,16,12,.10);
+
+  --fs-xxs:11.5px;  /* AM/PM, tiny meta */
+  --fs-xs:13px;     /* chips, hints */
+  --fs-s:15px;      /* body */
+  --fs-m:17px;      /* buttons, dense labels */
+  --fs-l:22px;      /* section titles */
+  --fs-xl:40px;     /* weather temp */
+  --lh-tight:1.2;
+  --lh-base:1.45;
+}
+body{ font-size:var(--fs-s); line-height:var(--lh-base); color:var(--sepia); }
+h2.section{ font-size:var(--fs-l); font-weight:700; letter-spacing:-.01em; }
+small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
+.num{ font-variant-numeric: tabular-nums; }
+
+/* helpers */
+.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
+.card > header{ margin-bottom:12px; }
+.stack-8 > * + *{ margin-top:8px; }
+.stack-16 > * + *{ margin-top:16px; }
+.section-divider{ height:1px; background:color-mix(in oklab, var(--border), #000 5%); margin:12px 0; }
+
+/* === Chips / Tags unified ============================================== */
+.chip, .tag{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 12px; border-radius:999px; font-size:var(--fs-xs);
+  background:var(--pill); border:1px solid var(--border); color:var(--sepia);
+}
+[aria-pressed="true"].chip{
+  background: color-mix(in oklab, var(--sage), #fff 85%);
+  border-color: color-mix(in oklab, var(--sage), #000 14%);
+}
+
+/* === Status banner ====================================================== */
+.status-banner{
+  position:sticky; top:8px; z-index:5;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  backdrop-filter:saturate(1.1) blur(8px);
+  background:color-mix(in oklab, var(--card), #ffffff 30%);
+  border:1px solid color-mix(in oklab, var(--border), #000 4%);
+  border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
+}
+.status-banner .left{ display:flex; align-items:center; gap:10px; }
+.status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
+.status-banner .times{ font-weight:600; }
+.status-banner .btn-plus{
+  min-width:36px; height:36px; border-radius:12px;
+  background:var(--pill); border:1px solid var(--border); font-weight:700;
+}
+.status-banner.late  .status-dot{ background:#E46464; }
+.status-banner.tight .status-dot{ background:#E6A64E; }
+.status-banner.ok    .status-dot{ background:#7FB086; }
+.status-banner.tight .btn-plus,
+.status-banner.late  .btn-plus{
+  background: color-mix(in oklab, var(--sage), #fff 78%);
+}
+
+/* === Weather card ======================================================= */
+.weather header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.weather .tools{ display:flex; align-items:center; gap:8px; }
+.weather-hero{ display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:12px; }
+.weather-hero .temp{ font-size:var(--fs-xl); font-weight:800; letter-spacing:-.015em; }
+.weather-hero .desc{ color:var(--muted); }
+.weather-mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+.weather-mini .cell{
+  background:var(--pill); border:1px solid var(--border);
+  border-radius:12px; padding:10px 8px; text-align:center;
+}
+.weather-mini .t{ font-weight:600; }
+.weather .foot{ margin-top:10px; color:var(--muted); font-size:var(--fs-xs); }
+
+/* windy hint via class on .weather */
+.weather.windy header .tag{ 
+  background: color-mix(in oklab, #DDEBF0, #fff 60%);
+  border-color: color-mix(in oklab, #B6D2DA, #000 8%);
+}
+
+/* === Leave plan ========================================================= */
+.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
+.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
+.input{
+  background:#FFFEFD; border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 12px;
+  height:var(--field-h); text-align:center; width:100%;
+}
+.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
+input[type=number]{ -moz-appearance:textfield; }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.hint{ color:var(--muted); font-size:var(--fs-xs); }
+
+/* === Timeline =========================================================== */
+/* merged timeline */
+.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
+.timeline.dense{ gap:8px; }
+.timeline::before{
+  content:""; position:absolute; left:42px; top:0; bottom:0;
+  width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
+  background-size:2px 14px; border-radius:2px;
+}
+.step{ display:grid; grid-template-columns:64px 1fr; gap:12px; }
+.time-node{
+  width:44px; height:44px; border-radius:999px; display:grid; place-items:center;
+  border:1px solid var(--border); background:var(--card); font-variant-numeric:tabular-nums;
+}
+.step.now .time-node{
+  border-color: color-mix(in oklab, var(--sage), #000 10%);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--sage), #fff 85%);
+}
+.step.due .cardlet{
+  background: var(--accent);
+  border: 1px solid var(--accent-border);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.step.done{ opacity:var(--done-fg); }
+.step.done .meta{ display:none; }
+.cardlet{
+  border:1px solid var(--border); border-radius:14px; padding:12px;
+  background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
+}
+.cardlet .label{ font-weight:600; white-space:normal; }
+.cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
+.cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
+.cardlet.med{
+  background: color-mix(in oklab, #FDF7F1, #fff 20%);
+  border-color: color-mix(in oklab, var(--mauve), #000 8%);
+}
+.cardlet.med.armed{ background:#F5FAF6; border-color:#D9EAD9; }
+.cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
+.cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
+.cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
+
+/* === Backpacks ========================================================== */
+.backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.pack-chip{
+  padding:10px 12px; border-radius:10px; line-height:1.2;
+  border:1px solid rgba(0,0,0,.06); background:#fff; text-align:left;
+  transition:background .2s ease, border-color .2s ease, opacity .2s ease;
+}
+.pack-chip[aria-pressed="true"]{ opacity:var(--done-fg); }
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){ .step.due .cardlet{ animation:none; } }
+
+/* === Motion ============================================================= */
+@media (prefers-reduced-motion:no-preference){
+  .btn-plus:active{ transform:translateY(1px) scale(.98); }
+  .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
+  .chip{ transition: background-color .15s, border-color .15s; }
+}
+/* === SPACING NORMALIZATION PATCH — 2025-08-29 === */
+:root{
+  /* 8px scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* app specifics */
+  --grid-gap: var(--s-6);       /* column gutter */
+  --card-pad: var(--s-5);       /* inner card padding */
+  --stack-gap: var(--s-4);      /* vertical rhythm inside cards */
+  --timeline-gap: var(--s-2);   /* space between timeline items */
+  --timeline-minh: 56px;        /* consistent row height */
+  --field-h:40px;
+  --radius:12px;
+  --accent:#EAE6FF;
+  --accent-border:#C8BFFF;
+  --done-fg:0.55;
+}
+
+/* two-column layout: left content + right timeline */
+main,
+.app-grid{
+  display: grid;
+  grid-template-columns: 1fr minmax(340px, 380px);
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+/* cards */
+.card{
+  padding: var(--card-pad);
+  border-radius: var(--radius);
+}
+.card > * + *{       /* vertical rhythm inside cards */
+  margin-top: var(--stack-gap);
+}
+
+/* make card stacks consistent */
+.section-stack > * + *{ margin-top: var(--stack-gap); }
+
+/* headings: tighten top, give breathing room below */
+.card h2,
+.card h3{
+  margin-top: 0;
+  margin-bottom: var(--s-3);
+  line-height: 1.2;
+}
+
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="layout">
-      <!-- LEFT MAIN COLUMN -->
-      <div class="main-col">
-        <section class="today-strip" aria-label="Today">
-          <div class="today-date" id="todayDate">Today</div>
-          <div class="today-tags">
-            <!-- Only School remains; pressed=true means "School day" -->
-            <span class="tag" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
-            <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+    <section class="today-strip" aria-label="Today">
+      <div class="today-date" id="todayDate">Today</div>
+      <div class="today-tags">
+        <!-- Only School remains; pressed=true means "School day" -->
+        <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
+        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+      </div>
+    </section>
+
+    <main class="app-grid">
+      <div class="left-stack">
+        <section class="card status-banner ok" role="region" aria-label="Status">
+          <div class="left">
+            <span class="status-dot" role="img" aria-label="On pace"></span>
+            <span class="pace-text">On pace</span>
           </div>
+          <div class="times">
+            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
+          </div>
+          <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
         </section>
 
-        <section class="status-banner" role="region" aria-label="Status">
-          <div class="status-left">
-            <span class="dot" aria-hidden="true"></span>
-            <span id="pace">On pace</span>
+        <section class="card weather" aria-label="Weather" id="weatherCard">
+        <header>
+          <div class="card-title">Weather</div>
+          <div class="tools">
+            <span class="tag" id="wxLocation">Hamilton</span>
+            <button class="btn btn-ghost" id="wxRefresh" aria-label="Refresh weather" type="button">Refresh</button>
+            <button class="btn btn-ghost" id="wxUseLoc" aria-label="Use my location">Use location</button>
           </div>
-          <div>
-            <span>Shoes <b id="tShoes">8:25 AM</b> • Leave <b id="tLeave">8:30 AM</b></span>
-            <button id="add5" class="btn btn-ghost" title="Add 5 min buffer">+5</button>
-          </div>
-        </section>
+        </header>
+        <div class="weather-hero"><div class="temp" id="wxNow">--°</div><div class="desc" id="wxCond">—</div></div>
+        <div class="stats">
+          <div>H <b id="wxHi">--</b>°</div>
+          <div>L <b id="wxLo">--</b>°</div>
+          <div>Rain <b id="wxRain">--%</b></div>
+        </div>
+        <div class="weather-mini" id="wxHours" aria-label="Mini forecast 5 points"></div>
+        <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
+        <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
+      </section>
 
-        <section class="card weather-hero" aria-label="Weather">
-          <header class="card-head">
-            <div class="card-title">Weather</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="tag tag-sage" id="wxLocation">Hamilton</div>
-              <button class="btn btn-ghost" id="wxRefresh" aria-label="Refresh weather" type="button">Refresh</button>
-              <button class="btn btn-ghost" id="wxUseLoc" aria-label="Use my location">Use location</button>
-              </div>
-          </header>
-          <div class="now"><div class="temp" id="wxNow">--°</div><div class="cond" id="wxCond">—</div></div>
-          <div class="stats">
-            <div>H <b id="wxHi">--</b>°</div>
-            <div>L <b id="wxLo">--</b>°</div>
-            <div>Rain <b id="wxRain">--%</b></div>
+        <section class="card leave-plan" aria-label="Leave plan">
+        <header class="card-head">
+          <div class="card-title">Leave plan</div>
+          <div class="tag tag-sage" id="schoolState">School day</div>
+        </header>
+        <div class="leave-form">
+          <div class="field">
+            <label for="arrival" class="label">Arrival time</label>
+            <input id="arrival" type="time" value="08:45" />
           </div>
-          <div class="mini" id="wxHours" aria-label="Mini forecast 5 points"></div>
-          <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
-          <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
-        </section>
+          <div class="field">
+            <label for="commute" class="label">Commute (min)</label>
+            <input id="commute" type="number" min="0" step="1" value="15" />
+          </div>
+          <div class="field">
+            <label for="shoesLead" class="label">Shoes lead (min)</label>
+            <input id="shoesLead" type="number" min="0" step="1" value="5" />
+          </div>
+        </div>
+        <div class="switch" style="margin-top:10px">
+          <input id="schoolOut" type="checkbox" />
+          <label for="schoolOut">School's Out (PA day)</label>
+        </div>
+        <div class="hint">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
+      </section>
 
-        <section class="card" aria-label="Leave plan">
-          <header class="card-head">
-            <div class="card-title">Leave plan</div>
-            <div class="tag tag-sage" id="schoolState">School day</div>
-          </header>
-          <div class="settings-grid">
-            <div class="field">
-              <label for="arrival">Arrival time</label>
-              <input id="arrival" type="time" value="08:45" />
-            </div>
-            <div class="field">
-              <label for="commute">Commute (min)</label>
-              <input id="commute" type="number" min="0" step="1" value="15" />
-            </div>
-            <div class="field">
-              <label for="shoesLead">Shoes lead (min)</label>
-              <input id="shoesLead" type="number" min="0" step="1" value="5" />
-            </div>
-          </div>
-          <div class="switch" style="margin-top:10px">
-            <input id="schoolOut" type="checkbox" />
-            <label for="schoolOut">School's Out (PA day)</label>
-          </div>
-          <div class="hint">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
-        </section>
-
-        <section class="card" aria-label="Backpacks">
-          <header class="card-head"><div class="card-title">Backpacks</div></header>
-          <div class="backpack-grid" id="packs"></div>
-          <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <span>Edit text inline; changes persist.</span>
-            <button class="btn btn-ghost" id="resetPacks">Reset checks</button>
-          </div>
-        </section>
+        <section class="card backpacks" aria-label="Backpacks" id="backpacks">
+        <header class="card-head"><div class="card-title">Backpacks</div></header>
+        <div class="backpacks-grid" id="packs"></div>
+        <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          <span>Tap items to toggle; changes persist.</span>
+          <button class="btn btn-ghost" id="resetPacks">Reset checks</button>
+        </div>
+      </section>
 
         <section class="card" aria-label="Schedules">
-          <header class="card-head"><div class="card-title">Class schedules</div></header>
-          <div class="schedule-actions">
-            <div>
-              <div><b>Onyx</b></div>
-              <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
-              <button class="btn btn-ghost" id="onyxView">View</button>
-              <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
-            </div>
-            <div>
-              <div><b>Peregrine</b></div>
-              <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
-              <button class="btn btn-ghost" id="pereView">View</button>
-              <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
-            </div>
+        <header class="card-head"><div class="card-title">Class schedules</div></header>
+        <div class="schedule-actions">
+          <div>
+            <div><b>Onyx</b></div>
+            <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
+            <button class="btn btn-ghost" id="onyxView">View</button>
+            <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
           </div>
-          <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
-        </section>
+          <div>
+            <div><b>Peregrine</b></div>
+            <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
+            <button class="btn btn-ghost" id="pereView">View</button>
+            <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
+          </div>
+        </div>
+        <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
+      </section>
 
-        <section aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
+        <section class="card utilities" aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
           <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
           <div class="hint">Offline-first; caches shell & last weather.</div>
         </section>
       </div>
 
-      <!-- RIGHT RAIL: compact, tall timeline -->
-      <div class="rail">
+      <aside class="right-stack">
         <section class="card" aria-label="Morning timeline">
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
@@ -291,10 +455,10 @@ dialog.modal{
               <button class="btn btn-ghost" id="toggleDense">Dense</button>
             </div>
           </header>
-          <div class="timeline" id="timeline"></div>
+          <div id="timeline"></div>
         </section>
-      </div>
-    </div>
+      </aside>
+    </main>
   </div>
 
   <!-- Reusable modal for viewing schedule image -->
@@ -336,13 +500,18 @@ dialog.modal{
       peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
     },
     todos:[
-      {id:'t1',text:'Breakfast — everyone',done:false,range:'06:45-07:15'},
-      {id:'t2',text:'Get dressed',done:false,abs:'07:20'},
-      {id:'t7',text:'Peregrine — medication 0.25 mg',done:false,abs:'08:15',special:'med'},
-      {id:'t9',text:'Pack lunches & water bottles',done:false,rel:'leave',offset:-9},
-      {id:'t10',text:'Bathroom — right before leave',done:false,rel:'leave',offset:-3},
-      {id:'t11',text:'Shoes on',done:false,rel:'shoes',offset:0},
-      {id:'t12',text:'Leave',done:false,rel:'leave',offset:0}
+      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
+      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
+      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
+      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
+      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
+      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
+      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
+      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
+      {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
+      {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
+      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
+      {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
     ],
     dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
     rules:[],
@@ -401,10 +570,9 @@ dialog.modal{
   // ---------- Elements ----------
   const el={
     todayDate:document.getElementById('todayDate'),
-    pace:document.getElementById('pace'),
-    tShoes:document.getElementById('tShoes'),
-    tLeave:document.getElementById('tLeave'),
-    add5:document.getElementById('add5'),
+    tShoes:document.getElementById('shoesTime'),
+    tLeave:document.getElementById('leaveTime'),
+    plus5:document.getElementById('plus5'),
     wx:{ loc:document.getElementById('wxLocation'), now:document.getElementById('wxNow'), cond:document.getElementById('wxCond'), hi:document.getElementById('wxHi'), lo:document.getElementById('wxLo'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing') },
     wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
@@ -432,14 +600,19 @@ dialog.modal{
     modalClose:document.getElementById('modalClose')
   };
 
-  document.querySelector('.status-banner')?.classList.add('is-sticky');
+  document.querySelectorAll('input[type="number"]').forEach(inp=>{
+    inp.setAttribute('inputmode','numeric');
+    inp.setAttribute('pattern','[0-9]*');
+    inp.classList.add('input');
+  });
+  el.arrival?.classList.add('input');
 
   // ---------- Init UI ----------
   el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
   el.schoolOut.checked=!currentFlags().schoolDay; updateSchoolVisual();
 
-  el.add5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
+  el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
   el.arrival.onchange=()=>{S.settings.arrival=el.arrival.value; save(); recomputeTimes()};
   el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
@@ -474,6 +647,8 @@ dialog.modal{
   el.modalClose.onclick=()=>el.modal.close();
   if (el.addTask) el.addTask.onclick = addTaskInteractive;
   if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
+  const statusEl = document.querySelector('.status-banner');
+  statusEl?.classList.add('is-sticky');
 
   recomputeTimes();
   renderTimeline();
@@ -528,6 +703,14 @@ dialog.modal{
     });
     el.wx.hours.appendChild(frag);
     el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
+    const card=document.querySelector('.weather');
+    if(card){
+      card.classList.toggle('windy',(S.wx?.wind??0)>=28);
+      const foot=card.querySelector('.foot')||card.appendChild(document.createElement('div'));
+      foot.className='foot';
+      const ts=S.wx?.lastUpdated?new Date(S.wx.lastUpdated):new Date();
+      foot.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    }
   }
 
   function bufferByWeather(){ if(!currentFlags().schoolDay) return 0; const code=S.wx.code; if(isSnow(code)) return 15; if(isRain(code)) return 10; return 0 }
@@ -540,7 +723,12 @@ dialog.modal{
     const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
     el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
-    updatePace(); renderTimeline(leave,shoes);
+    const shoesEl=document.getElementById('shoesTime');
+    const leaveEl=document.getElementById('leaveTime');
+    [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
+    if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
+    if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    updatePace(); renderTimeline(leave,shoes); updateMedState();
   }
 
   function updatePace(){
@@ -548,38 +736,30 @@ dialog.modal{
     const leaveHM=parseHM24(el.tLeave.textContent);
     const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
     let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
-    el.pace.textContent=status
+    const banner=document.querySelector('.status-banner');
+    if(!banner) return;
+    const paceText=banner.querySelector('.pace-text');
+    if(paceText) paceText.textContent=status;
+    const label=status.toLowerCase();
+    banner.classList.remove('late','tight','ok');
+    let state='ok';
+    if(label.includes('late')) state='late';
+    else if(label.includes('tight')) state='tight';
+    banner.classList.add(state);
+    const dot=banner.querySelector('.status-dot');
+    if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
   }
 
   // ---------- Timeline + Med states ----------
-  const MED_WARMUP_MIN = 10;
-  const MED_GRACE_MIN  = 5;
-
-  function medState(nowM, targetM, done){
-    if(done) return 'done';
-    const diff = targetM - nowM;
-    if(diff > MED_WARMUP_MIN) return 'idle';
-    if(diff > 0)              return 'armed';
-    if(diff >= -MED_GRACE_MIN)return 'due';
-    return 'late';
-  }
-
-  function updateMedStateFor(step){
-    const [hh,mm]=step.dataset.target.split(':').map(n=>+n); const targetM=hh*60+mm;
-    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-    const isDone=step.classList.contains('done');
-    const st=medState(nowM,targetM,isDone);
-    step.classList.remove('idle','armed','due','late','done');
-    step.classList.add(st);
-  }
-
-  function refreshMedStates(){ el.timeline.querySelectorAll('.step.med').forEach(updateMedStateFor); }
 
   function renderTimeline(leaveHM,shoesHM){
+    const rail=document.getElementById('timeline');
+    if(!rail) return;
+    rail.classList.add('timeline');
     const L=leaveHM||parseHM24(el.tLeave.textContent);
     const SH=shoesHM||parseHM24(el.tShoes.textContent);
     const tasks=[...S.todos].sort((a,b)=> taskStartMinutes(L,SH,a) - taskStartMinutes(L,SH,b));
-    el.timeline.innerHTML='';
+    rail.innerHTML='';
     const frag=document.createDocumentFragment();
     tasks.forEach(t=>{
       let start=null,end=null,label='';
@@ -592,36 +772,47 @@ dialog.modal{
       step.className='step'+(t.done?' done':'')+(t.special==='med'?' med':'');
       step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
 
-      const time=document.createElement('div'); time.className='time-node';
-      time.innerHTML=`<div class="hhmm">${timeHHMM(start)}</div><div class="ampm">${start.h<12?'AM':'PM'}</div>`;
+      const tn=document.createElement('div'); tn.className='time-node num';
+      tn.innerHTML=`<div>${timeHHMM(start)}</div><div class="meta">${start.h<12?'AM':'PM'}</div>`;
 
       const card=document.createElement('div');
       if(t.special==='med'){
         card.className='cardlet med';
-        const art=document.createElement('div'); art.className='art'; art.innerHTML=BOTTLE_SVG;
+        const bottle=document.createElement('div'); bottle.className='bottle'; bottle.innerHTML=BOTTLE_SVG;
         const info=document.createElement('div'); info.innerHTML=`<div class="label">${escapeHtml(t.text)}</div><div class="meta">${label}</div>`;
-        card.append(art,info);
+        card.append(bottle,info);
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
-        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
         actions.appendChild(del); card.appendChild(actions);
-        card.onclick=()=>{ if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
-          t.done=!t.done; save(); step.classList.toggle('done',t.done); updateMedStateFor(step); };
+        card.onclick=()=>{
+          if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
+          t.done=!t.done; save();
+          step.classList.toggle('done',t.done);
+          if(t.done) step.classList.remove('due');
+          updateMedState();
+          refreshTimelineStates();
+        };
       } else {
         card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false');
-        card.innerHTML=`<span class="label">${escapeHtml(t.text)}</span><span class="meta">${label}</span>`;
+        card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div><div class="meta">${label}</div>`;
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
-        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); };
+        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
         actions.appendChild(del); card.appendChild(actions);
-        card.onclick=()=>{ t.done=!t.done; save(); step.classList.toggle('done',t.done); card.setAttribute('aria-checked',t.done?'true':'false') };
+        card.onclick=()=>{
+          t.done=!t.done; save();
+          step.classList.toggle('done',t.done);
+          card.setAttribute('aria-checked',t.done?'true':'false');
+          if(t.done) step.classList.remove('due');
+          refreshTimelineStates();
+        };
       }
 
-      step.appendChild(time); step.appendChild(card); frag.appendChild(step);
+      step.appendChild(tn); step.appendChild(card); frag.appendChild(step);
     });
-    el.timeline.appendChild(frag);
+    rail.appendChild(frag);
     refreshTimelineStates();
-    refreshMedStates();
   }
 
   function refreshTimelineStates(){
@@ -631,11 +822,37 @@ dialog.modal{
     rows.forEach((r,i)=>{
       const [hh,mm]=r.dataset.target.split(':').map(n=>+n); const m=hh*60+mm;
       const diff=m-nowM;
-      r.classList.remove('now','past');
-      if(diff<0){ r.classList.add('past'); }
-      else if(diff<best){ best=diff; upNext=i; }
+      r.classList.remove('now','due');
+      if(diff<0 && !r.classList.contains('done')){ r.classList.add('due'); }
+      else if(diff>=0 && diff<best && !r.classList.contains('done')){ best=diff; upNext=i; }
     });
     if(upNext>=0) rows[upNext].classList.add('now');
+  }
+
+  function updateMedState(){
+    const med = S.todos.find(x=>x.special==='med');
+    if(!med) return;
+    let target;
+    if (med.abs) target = hmToMinutes(parseHM(med.abs));
+    else {
+      const L=parseHM24(el.tLeave.textContent), SH=parseHM24(el.tShoes.textContent);
+      if (med.rel==='leave') target = hmToMinutes(L)+(med.offset||0);
+      else if (med.rel==='shoes') target = hmToMinutes(SH)+(med.offset||0);
+    }
+    if (target==null) return;
+
+    const now = new Date(), nowM = now.getHours()*60 + now.getMinutes();
+    const diff = nowM - target;
+
+    let state = '';
+    if (diff < 0 && diff >= -10) state = 'armed';
+    else if (diff >= 0 && diff <= 5) state = 'due';
+    else if (diff > 5) state = 'late';
+
+    const node = el.timeline.querySelector('.cardlet.med');
+    if (!node) return;
+    node.classList.remove('armed','due','late');
+    if (state) node.classList.add(state);
   }
 
   // ---------- Backpacks ----------
@@ -643,46 +860,22 @@ dialog.modal{
     const grid=el.packs; grid.innerHTML='';
     const fragAll=document.createDocumentFragment();
     [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
-      const card=document.createElement('div'); card.className='backpack-card';
+      const card=document.createElement('div'); card.className='card';
       const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
-      const listFrag=document.createDocumentFragment();
-      S.backpacks[key].forEach((item,idx)=>{
-        const row=document.createElement('div'); row.className='pack-row'+(item.done?' checked':'');
-        const cb=document.createElement('input'); cb.type='checkbox'; cb.id=`cb-${key}-${idx}`; cb.checked=item.done; cb.setAttribute('aria-labelledby',`txt-${key}-${idx}`);
-        cb.onchange=()=>{ item.done=cb.checked; row.classList.toggle('checked',item.done); save() };
-
-        const txt=document.createElement('div'); txt.id=`txt-${key}-${idx}`; txt.textContent=item.text; txt.contentEditable='true';
-        txt.oninput=()=>{ item.text=txt.textContent; save() };
-
-        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete item'); del.textContent='×';
-        del.onclick=()=>{ S.backpacks[key].splice(idx,1); save(); renderBackpacks(); };
-
-        row.append(cb, txt, del);
-        listFrag.appendChild(row);
+      const list=document.createElement('div'); list.className='backpacks-grid';
+      S.backpacks[key].forEach(item=>{
+        const btn=document.createElement('button');
+        btn.className='pack-chip';
+        btn.textContent=item.text;
+        btn.setAttribute('aria-pressed', item.done?'true':'false');
+        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
+        list.appendChild(btn);
       });
-
-      card.appendChild(listFrag);
-      const controls=document.createElement('div');
-      controls.style.display='flex'; controls.style.gap='8px'; controls.style.marginTop='10px';
-
-      const addBtn=document.createElement('button');
-      addBtn.className='btn btn-ghost'; addBtn.textContent='+ Add item';
-      addBtn.onclick=()=>{ const t=prompt('New item text'); if(!t) return;
-        S.backpacks[key].push({text:t.trim(),done:false}); save(); renderBackpacks();
-      };
-
-      const defBtn=document.createElement('button');
-      defBtn.className='btn btn-ghost'; defBtn.textContent='Restore defaults';
-      defBtn.onclick=()=>{ if(!confirm('Replace this list with defaults?')) return;
-        S.backpacks[key]=PACK_DEFAULTS.map(x=>({text:x,done:false})); save(); renderBackpacks();
-      };
-
-      controls.append(addBtn, defBtn);
-      card.appendChild(controls);
+      card.appendChild(list);
       fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
-    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":'School day';
+    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":"School day";
   }
 
   // ---------- Rules -> chips ----------
@@ -695,7 +888,7 @@ dialog.modal{
       return (w.date===today) || (Array.isArray(w.dates) && w.dates.includes(today));
     }).forEach(r=>{
       const chip=document.createElement('button');
-      chip.className='tag';
+      chip.className='chip';
       chip.dataset.chip='rule';
       chip.textContent=r.title+(r.kid?` — ${capitalize(r.kid)}`:'');
       chip.onclick=()=>applyRuleInteractive(r);
@@ -746,7 +939,7 @@ dialog.modal{
     else if (/^\d{2}:\d{2}$/.test(w)){ task={id:'t'+Math.random().toString(36).slice(2),text,done:false,abs:w}; }
     else if (w.startsWith('leave')||w.startsWith('shoes')){ const [rel,offStr]=w.split(/\s+/); const offset=parseInt(offStr||'0',10); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,rel,offset}; }
     else return alert('Unrecognized time format.');
-    S.todos.push(task); save(); recomputeTimes(); renderTimeline();
+    S.todos.push(task); save(); recomputeTimes(); renderTimeline(); updateMedState();
   }
 
   // ---------- Schedules (images) ----------
@@ -817,7 +1010,7 @@ dialog.modal{
 
   // ---------- Ticking ----------
   function startMinuteAlignedTick(){
-    const tick=()=>{ updatePace(); refreshTimelineStates(); refreshMedStates(); renderRuleChips(); };
+    const tick=()=>{ updatePace(); refreshTimelineStates(); updateMedState(); renderRuleChips(); };
     tick();
     const delay=60000-(Date.now()%60000);
     setTimeout(()=>{ tick(); setInterval(tick,60000); }, delay);
