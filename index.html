@@ -427,8 +427,16 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
           <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
         </section>
 
-        <section aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
+        <section aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
           <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
+          <div class="switch">
+            <input id="voiceOn" type="checkbox" />
+            <label for="voiceOn">Voice announcements</label>
+          </div>
+          <div class="switch">
+            <input id="chimeOn" type="checkbox" />
+            <label for="chimeOn">Chime on meds due</label>
+          </div>
           <div class="hint">Offline-first; caches shell & last weather.</div>
         </section>
       </div>
@@ -480,7 +488,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   // ---------- Default state ----------
   const DEFAULT_STATE={
-    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
+    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton', voiceOn:false, chimeOn:true },
     wx:{now:null,high:null,low:null,rain:null,wind:null,code:null,desc:'',icon:'⛅',hours:[],lastUpdated:null},
     events:[],
     backpacks:{
@@ -547,6 +555,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   // ---------- Boot ----------
   let S=load();
+  let _lastUpNextIdx = -1;
   dailyRollover();
   ensureBackpackDefaults(); save();
 
@@ -569,6 +578,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
     exportBtn:document.getElementById('exportBtn'),
+    voiceOn:document.getElementById('voiceOn'),
+    chimeOn:document.getElementById('chimeOn'),
     quickAdd:document.getElementById('quickAdd'),
     tagsBar:document.querySelector('.today-tags'),
     schoolChip:document.querySelector('[data-tag="school"]'),
@@ -600,6 +611,10 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
   el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
+  el.voiceOn.checked = !!S.settings.voiceOn;
+  el.chimeOn.checked = !!S.settings.chimeOn;
+  el.voiceOn.onchange = ()=>{ S.settings.voiceOn = el.voiceOn.checked; save(); };
+  el.chimeOn.onchange = ()=>{ S.settings.chimeOn = el.chimeOn.checked; save(); };
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
   el.exportBtn.onclick=exportJSON;
   const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
@@ -749,6 +764,14 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     const isDone=step.classList.contains('done');
     const st=medState(nowM,targetM,isDone);
+    const prev = step.dataset.prevState || '';
+    if (st !== prev) {
+      if (st === 'due') {
+        ding();
+        say('Medication time');
+      }
+      step.dataset.prevState = st;
+    }
     step.classList.remove('idle','armed','due','late','done');
     step.classList.add(st);
   }
@@ -774,6 +797,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       const step=document.createElement('div');
       step.className='step'+(t.done?' done':'')+(t.special==='med'?' med':'');
       step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
+      step.dataset.text = t.text;
+      step.dataset.pretty = label; // human-friendly time string
 
       const tn=document.createElement('div'); tn.className='time-node num';
       tn.innerHTML=`<div>${timeHHMM(start)}</div><div class="meta">${start.h<12?'AM':'PM'}</div>`;
@@ -819,6 +844,15 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       else if(diff<best){ best=diff; upNext=i; }
     });
     if(upNext>=0) rows[upNext].classList.add('now');
+
+    // Voice announce if the highlighted step changed
+    if (upNext !== _lastUpNextIdx && upNext >= 0) {
+      _lastUpNextIdx = upNext;
+      const s = rows[upNext];
+      const txt = s?.dataset?.text || 'Next step';
+      const when = s?.dataset?.pretty ? ' — ' + s.dataset.pretty : '';
+      say('Up next: ' + txt + when);
+    }
   }
 
   // ---------- Backpacks ----------
@@ -997,6 +1031,31 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
   function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
+
+  // --- Voice & chime (no servers) ---
+  let _audioCtx=null;
+  function ensureAudio(){ if(!_audioCtx){ try{ _audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch{} } return _audioCtx; }
+  function ding(){
+    if(!S.settings.chimeOn) return;
+    const ac = ensureAudio(); if(!ac) return;
+    const t = ac.currentTime;
+    const osc = ac.createOscillator(); const gain = ac.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(880, t);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.15, t+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(t); osc.stop(t+0.2);
+  }
+  function say(text){
+    if(!S.settings.voiceOn) return;
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.0; u.pitch = 1.0;
+      speechSynthesis.speak(u);
+    }catch{}
+  }
 
   // ---------- Ticking ----------
   function startMinuteAlignedTick(){
