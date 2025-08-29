@@ -1,5 +1,5 @@
 /* sw.js */
-const SHELL = 'dc-shell-v14';
+const SHELL = 'dc-shell-v17';
 const DATA  = 'dc-data-v1';
 
 self.addEventListener('install', (e) => {
