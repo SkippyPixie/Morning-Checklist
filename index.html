@@ -125,6 +125,11 @@ dialog.modal{
   --mauve:#9B8D88;
   --border:#E6DBCE;
   --pill:#EEF4EC;
+  --railW: clamp(360px, 28vw, 460px);
+  --ring:#C7D7C5;
+  --soft:#F7F3EE;
+  --ink:#2E2A27;
+
   /* layout + type */
   --gap:16px;
   --pad:16px;
@@ -209,15 +214,74 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 }
 
 /* === Leave plan ========================================================= */
+.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
+.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
+.input{
+  background:#FFFEFD; border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 12px;
+  height:var(--field-h); text-align:center; width:100%;
+}
+.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
+input[type=number]{ -moz-appearance:textfield; }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.hint{ color:var(--muted); font-size:var(--fs-xs); }
+
+/* === Timeline =========================================================== */
+/* merged timeline */
+.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
+.timeline.dense{ gap:8px; }
+.timeline::before{
+  content:""; position:absolute; left:42px; top:0; bottom:0;
+  width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
+  background-size:2px 14px; border-radius:2px;
+}
+.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; }
+.time-node{
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
+  font-size:12px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;
 }
 .step.now .time-node{
   border-color: color-mix(in oklab, var(--sage), #000 10%);
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--sage), #fff 85%);
 }
+.step.due .cardlet{
+  background: var(--accent);
+  border: 1px solid var(--accent-border);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.step.done{ opacity:var(--done-fg); }
+.step.done .meta{ display:none; }
+.cardlet{
+  border:1px solid var(--border); border-radius:14px; padding:12px;
+  background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
+}
+.cardlet .label{ font-weight:600; white-space:normal; }
+.cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
+.cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .cardlet.med{
   background: color-mix(in oklab, #FDF7F1, #fff 20%);
   border-color: color-mix(in oklab, var(--mauve), #000 8%);
 }
+.cardlet.med.armed{ background:#F5FAF6; border-color:#D9EAD9; }
+.cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
+.cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
+.cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
+
+/* === Backpacks ========================================================== */
+.backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.pack-chip{
+  padding:10px 12px; border-radius:10px; line-height:1.2;
+  border:1px solid rgba(0,0,0,.06); background:#fff; text-align:left;
+  transition:background .2s ease, border-color .2s ease, opacity .2s ease;
+  color:var(--ink-900);
+}
+.pack-chip[aria-pressed="true"]{ opacity:.55; }
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){ .step.due .cardlet{ animation:none; } }
 
 /* === Motion ============================================================= */
 @media (prefers-reduced-motion:no-preference){
@@ -225,19 +289,155 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
   .chip{ transition: background-color .15s, border-color .15s; }
 }
+/* === SPACING NORMALIZATION PATCH — 2025-08-29 === */
+:root{
+  /* 8px scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* app specifics */
+  --grid-gap: var(--s-6);       /* column gutter */
+  --card-pad: var(--s-5);       /* inner card padding */
+  --stack-gap: var(--s-4);      /* vertical rhythm inside cards */
+  --timeline-gap: var(--s-2);   /* space between timeline items */
+  --timeline-minh: 56px;        /* consistent row height */
+  --field-h:40px;
+  --radius:12px;
+  --accent:#EAE6FF;
+  --accent-border:#C8BFFF;
+  --done-fg:0.55;
+}
+
+/* two-column layout: left content + right timeline */
+main,
+.app-grid{
+  display: grid;
+  grid-template-columns: 1fr minmax(340px, 380px);
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+/* cards */
+.card{
+  padding: var(--card-pad);
+  border-radius: var(--radius);
+}
+.card > * + *{       /* vertical rhythm inside cards */
+  margin-top: var(--stack-gap);
+}
+
+/* make card stacks consistent */
+.section-stack > * + *{ margin-top: var(--stack-gap); }
+
+/* headings: tighten top, give breathing room below */
+.card h2,
+.card h3{
+  margin-top: 0;
+  margin-bottom: var(--s-3);
+  line-height: 1.2;
+}
+
+:root{
+  --sage:#9CAB86;
+  --sage-bg: rgba(156,171,134,.18);
+  --ink-900:#222;
+  --ink-700:#444;
+}
+
+
+/* keep meds item larger and tinted */
+
+.wx-hero{
+  display:grid; grid-template-columns:1fr; justify-items:center; row-gap:6px;
+  margin-bottom:10px;
+}
+.wx-temp{ font-size:42px; font-weight:700; line-height:1; }
+.wx-icon{ font-size:42px; transform:translateY(-2px); }
+.wx-desc{ color:var(--ink-700); font-weight:500; }
+
+.leave-form{
+  display:grid; grid-template-columns:1fr 110px 110px; gap:16px; align-items:end;
+}
+.leave-form .field label{ display:block; margin:0 0 6px; font-weight:600; }
+.leave-form input[type="time"],
+.leave-form input[type="number"]{
+  height:40px; border-radius:12px; text-align:center; width:100%;
+}
+.leave-buffers{ position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); }
+
+
   </style>
 </head>
 <body>
   <div class="app">
+    <section class="today-strip" aria-label="Today">
+      <div class="today-date" id="todayDate">Today</div>
+      <div class="today-tags">
+        <!-- Only School remains; pressed=true means "School day" -->
+        <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
+        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+      </div>
+    </section>
+
+    <main class="app-grid">
+      <div class="left-stack">
+        <section class="card status-banner ok" role="region" aria-label="Status">
+          <div class="left">
+            <span class="status-dot" role="img" aria-label="On pace"></span>
+            <span class="pace-text">On pace</span>
+          </div>
           <div class="times">
             <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
           </div>
           <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
+        </section>
+
+        <section class="card weather" aria-label="Weather" id="weatherCard">
+        <header>
+          <div class="card-title">Weather</div>
+          <div class="tools">
+            <span class="tag" id="wxLocation">Hamilton</span>
+            <button class="btn btn-ghost" id="wxRefresh" aria-label="Refresh weather" type="button">Refresh</button>
+            <button class="btn btn-ghost" id="wxUseLoc" aria-label="Use my location">Use location</button>
+          </div>
+        </header>
+        <div class="wx-hero">
+          <div class="wx-temp" id="wx-temp">--°</div>
+          <div class="wx-icon" id="wx-icon" aria-hidden="true">🌡️</div>
+          <div class="wx-desc" id="wx-desc">—</div>
+        </div>
+        <div class="stats">
+          <div>H <b id="wxHi">--</b>°</div>
+          <div>L <b id="wxLo">--</b>°</div>
+          <div>Rain <b id="wxRain">--%</b></div>
+        </div>
+        <div class="weather-mini" id="wxHours" aria-label="Mini forecast 5 points"></div>
+        <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
+        <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
+      </section>
+
+        <section class="card leave-plan" aria-label="Leave plan">
+        <header class="card-head">
+          <div class="card-title">Leave plan</div>
+          <div class="tag tag-sage" id="schoolState">School day</div>
+        </header>
+        <div class="leave-form">
+          <div class="field">
+            <label for="arrival" class="label">Arrival time</label>
+            <input id="arrival" type="time" value="08:45" />
           </div>
           <div class="field">
             <label for="commute" class="label">Commute (min)</label>
             <input id="commute" type="number" min="0" step="1" value="15" />
           </div>
+          <div class="field">
+            <label for="shoesLead" class="label">Shoes lead (min)</label>
+            <input id="shoesLead" type="number" min="0" step="1" value="5" />
           </div>
         </div>
         <div class="switch" style="margin-top:10px">
@@ -408,6 +608,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
     plus5:document.getElementById('plus5'),
+    wx:{ loc:document.getElementById('wxLocation'), temp:document.getElementById('wx-temp'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), hi:document.getElementById('wxHi'), lo:document.getElementById('wxLo'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing') },
     wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
     commute:document.getElementById('commute'),
@@ -572,6 +773,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
     if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
     if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    updatePace(); renderTimeline(leave,shoes); updateMedState();
   }
 
   function updatePace(){
@@ -616,6 +818,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
 
       const tn=document.createElement('div'); tn.className='time-node num';
+      tn.textContent=timeHHMM(start);
+
       const card=document.createElement('div');
       if(t.special==='med'){
         card.className='cardlet med';
@@ -635,6 +839,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
           refreshTimelineStates();
         };
       } else {
+        card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
@@ -671,10 +876,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function updateMedState(){
     const med = S.todos.find(x=>x.special==='med');
     if(!med) return;
-    const node = el.timeline.querySelector('.cardlet.med');
-    if (!node) return;
-    node.classList.remove('armed','due','late');
-    if (med.done) return;
     let target;
     if (med.abs) target = hmToMinutes(parseHM(med.abs));
     else {
@@ -692,6 +893,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     else if (diff >= 0 && diff <= 5) state = 'due';
     else if (diff > 5) state = 'late';
 
+    const node = el.timeline.querySelector('.cardlet.med');
+    if (!node) return;
+    node.classList.remove('armed','due','late');
     if (state) node.classList.add(state);
   }
 
@@ -702,6 +906,14 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
       const card=document.createElement('div'); card.className='card';
       const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
+      const list=document.createElement('div'); list.className='backpacks-grid';
+      S.backpacks[key].forEach(item=>{
+        const btn=document.createElement('button');
+        btn.className='pack-chip';
+        btn.textContent=item.text;
+        btn.setAttribute('aria-pressed', item.done?'true':'false');
+        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
+        list.appendChild(btn);
       });
       card.appendChild(list);
       fragAll.appendChild(card);
