@@ -77,13 +77,82 @@ body{
 :focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px; }
 
 /* ---- Weather ---- */
-.weather-hero .now{ display:flex; align-items:baseline; gap:10px; }
-.weather-hero .temp{ font-size:40px; font-weight:800; }
-.weather-hero .cond{ font-size:17px; color:var(--muted); }
-.weather-hero .stats{ display:flex; gap:16px; color:var(--muted); margin-top:6px; }
-.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .weather-mini{ opacity:.5; }
-.weather-hero.loading .temp::after{
-  content:'…'; margin-left:6px; font-weight:700; opacity:.8;
+/* Weather hero styles */
+.weather-hero{
+  --paper:#F6F1EB;
+  --ink:#5C4433;
+  --sage:#7A8C5F;
+  --line:rgba(0,0,0,.06);
+  --temp-size:clamp(72px, 9vw, 124px);
+  --r:20px;
+  --pad:24px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:var(--pad);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+/* --- Two-column grid --- */
+.wx-grid{
+  display:grid;
+  grid-template-columns:minmax(320px, 1fr) 1fr;
+  gap:24px;
+  align-items:center;
+}
+
+/* --- Left block: temp + icon --- */
+.wx-lead{display:flex; flex-direction:column; gap:8px}
+.wx-lockup{display:flex; align-items:flex-end; gap:16px}
+
+/* Temperature */
+.wx-temp{font-size:var(--temp-size); line-height:1; font-weight:800; color:var(--sage); letter-spacing:-0.02em}
+.wx-temp-unit{margin-left:2px}
+
+/* Icon locked to number height (top/bottom align) */
+.wx-icon{
+  height:calc(var(--temp-size) * 0.96);
+  aspect-ratio:1/1;
+  object-fit:contain;
+  display:block;
+  margin-bottom:0;
+}
+
+/* Condition label */
+.wx-cond{font-size:18px; color:var(--ink)}
+
+/* --- Right block: chips + quick stats --- */
+.wx-aside{display:flex; flex-direction:column; gap:12px}
+.wx-chips{display:flex; flex-wrap:wrap; gap:8px}
+.weather-hero .chip{
+  background:#fff; border:1px solid var(--line); border-radius:999px;
+  padding:6px 12px; font-size:14px; color:var(--ink)
+}
+.weather-hero .chip--ghost{background:transparent}
+
+.wx-stats{display:grid; grid-template-columns:repeat(2, minmax(120px,1fr)); gap:8px 16px}
+.wx-stats dt{font-size:12px; color:rgba(0,0,0,.55)}
+.wx-stats dd{font-size:16px; color:var(--ink); margin:0}
+
+/* --- Slim hourly strip --- */
+.wx-hours{
+  margin-top:16px;
+  display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
+  font-size:14px; color:var(--ink)
+}
+.wx-hours > div{
+  background:#fff; border:1px solid var(--line); border-radius:14px;
+  padding:8px 10px; text-align:center
+}
+.wx-dot{opacity:.35}
+
+/* --- Footer line --- */
+.wx-updated{margin:10px 0 0; font-size:12px; color:rgba(0,0,0,.55)}
+
+/* --- Responsiveness --- */
+@media (max-width: 980px){
+  .wx-grid{grid-template-columns:1fr}
+  .wx-aside{order:2}
 }
 
 /* ---- Leave plan ---- */
@@ -125,6 +194,11 @@ dialog.modal{
   --mauve:#9B8D88;
   --border:#E6DBCE;
   --pill:#EEF4EC;
+  --railW: clamp(360px, 28vw, 460px);
+  --ring:#C7D7C5;
+  --soft:#F7F3EE;
+  --ink:#2E2A27;
+
   /* layout + type */
   --gap:16px;
   --pad:16px;
@@ -191,16 +265,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 /* === Weather card ======================================================= */
 .weather header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .weather .tools{ display:flex; align-items:center; gap:8px; }
-.weather-hero{ display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:12px; }
-.weather-hero .temp{ font-size:var(--fs-xl); font-weight:800; letter-spacing:-.015em; }
-.weather-hero .desc{ color:var(--muted); }
-.weather-mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
-.weather-mini .cell{
-  background:var(--pill); border:1px solid var(--border);
-  border-radius:12px; padding:10px 8px; text-align:center;
-}
-.weather-mini .t{ font-weight:600; }
-.weather .foot{ margin-top:10px; color:var(--muted); font-size:var(--fs-xs); }
+/* old weather styles removed */
 
 /* windy hint via class on .weather */
 .weather.windy header .tag{ 
@@ -209,15 +274,74 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 }
 
 /* === Leave plan ========================================================= */
+.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
+.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
+.input{
+  background:#FFFEFD; border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 12px;
+  height:var(--field-h); text-align:center; width:100%;
+}
+.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
+input[type=number]{ -moz-appearance:textfield; }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.hint{ color:var(--muted); font-size:var(--fs-xs); }
+
+/* === Timeline =========================================================== */
+/* merged timeline */
+.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
+.timeline.dense{ gap:8px; }
+.timeline::before{
+  content:""; position:absolute; left:42px; top:0; bottom:0;
+  width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
+  background-size:2px 14px; border-radius:2px;
+}
+.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; }
+.time-node{
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
+  font-size:12px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;
 }
 .step.now .time-node{
   border-color: color-mix(in oklab, var(--sage), #000 10%);
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--sage), #fff 85%);
 }
+.step.due .cardlet{
+  background: var(--accent);
+  border: 1px solid var(--accent-border);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.step.done{ opacity:var(--done-fg); }
+.step.done .meta{ display:none; }
+.cardlet{
+  border:1px solid var(--border); border-radius:14px; padding:12px;
+  background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
+}
+.cardlet .label{ font-weight:600; white-space:normal; }
+.cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
+.cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .cardlet.med{
   background: color-mix(in oklab, #FDF7F1, #fff 20%);
   border-color: color-mix(in oklab, var(--mauve), #000 8%);
 }
+.cardlet.med.armed{ background:#F5FAF6; border-color:#D9EAD9; }
+.cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
+.cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
+.cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
+
+/* === Backpacks ========================================================== */
+.backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.pack-chip{
+  padding:10px 12px; border-radius:10px; line-height:1.2;
+  border:1px solid rgba(0,0,0,.06); background:#fff; text-align:left;
+  transition:background .2s ease, border-color .2s ease, opacity .2s ease;
+  color:var(--ink-900);
+}
+.pack-chip[aria-pressed="true"]{ opacity:.55; }
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){ .step.due .cardlet{ animation:none; } }
 
 /* === Motion ============================================================= */
 @media (prefers-reduced-motion:no-preference){
@@ -225,19 +349,157 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
   .chip{ transition: background-color .15s, border-color .15s; }
 }
+/* === SPACING NORMALIZATION PATCH — 2025-08-29 === */
+:root{
+  /* 8px scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* app specifics */
+  --grid-gap: var(--s-6);       /* column gutter */
+  --card-pad: var(--s-5);       /* inner card padding */
+  --stack-gap: var(--s-4);      /* vertical rhythm inside cards */
+  --timeline-gap: var(--s-2);   /* space between timeline items */
+  --timeline-minh: 56px;        /* consistent row height */
+  --field-h:40px;
+  --radius:12px;
+  --accent:#EAE6FF;
+  --accent-border:#C8BFFF;
+  --done-fg:0.55;
+}
+
+/* two-column layout: left content + right timeline */
+main,
+.app-grid{
+  display: grid;
+  grid-template-columns: 1fr minmax(340px, 380px);
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+/* cards */
+.card{
+  padding: var(--card-pad);
+  border-radius: var(--radius);
+}
+.card > * + *{       /* vertical rhythm inside cards */
+  margin-top: var(--stack-gap);
+}
+
+/* make card stacks consistent */
+.section-stack > * + *{ margin-top: var(--stack-gap); }
+
+/* headings: tighten top, give breathing room below */
+.card h2,
+.card h3{
+  margin-top: 0;
+  margin-bottom: var(--s-3);
+  line-height: 1.2;
+}
+
+:root{
+  --sage:#9CAB86;
+  --sage-bg: rgba(156,171,134,.18);
+  --ink-900:#222;
+  --ink-700:#444;
+}
+
+
+/* keep meds item larger and tinted */
+
+.wx-desc{ color:var(--ink-700); font-weight:500; }
+
+.leave-form{
+  display:grid; grid-template-columns:1fr 110px 110px; gap:16px; align-items:end;
+}
+.leave-form .field label{ display:block; margin:0 0 6px; font-weight:600; }
+.leave-form input[type="time"],
+.leave-form input[type="number"]{
+  height:40px; border-radius:12px; text-align:center; width:100%;
+}
+.leave-buffers{ position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); }
+
+
   </style>
 </head>
 <body>
   <div class="app">
+    <section class="today-strip" aria-label="Today">
+      <div class="today-date" id="todayDate">Today</div>
+      <div class="today-tags">
+        <!-- Only School remains; pressed=true means "School day" -->
+        <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
+        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+      </div>
+    </section>
+
+    <main class="app-grid">
+      <div class="left-stack">
+        <section class="card status-banner ok" role="region" aria-label="Status">
+          <div class="left">
+            <span class="status-dot" role="img" aria-label="On pace"></span>
+            <span class="pace-text">On pace</span>
+          </div>
           <div class="times">
             <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
           </div>
           <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
+        </section>
+
+        <section class="weather-hero" aria-label="Weather">
+        <div class="wx-grid">
+          <div class="wx-lead">
+            <div class="wx-lockup">
+              <div class="wx-temp" aria-label="Temperature">
+                <span class="wx-temp-value" id="wxTemp">--</span><span class="wx-temp-unit">°</span>
+              </div>
+              <img class="wx-icon" id="wxIcon" src="icons/weather/clear-day.svg" alt="Clear" />
+            </div>
+            <div class="wx-cond" id="wxCond" aria-label="Condition">—</div>
+          </div>
+
+          <aside class="wx-aside">
+            <div class="wx-chips">
+              <button class="chip" id="wxLocation">Hamilton</button>
+              <button class="chip" id="wxRefresh">Refresh</button>
+              <button class="chip chip--ghost" id="wxUseLoc">Use location</button>
+            </div>
+
+            <dl class="wx-stats">
+              <div><dt>Feels</dt><dd id="wxFeels">--°</dd></div>
+              <div><dt>Wind</dt><dd id="wxWind">-- km/h</dd></div>
+              <div><dt>Humidity</dt><dd id="wxHum">--%</dd></div>
+              <div><dt>Rain</dt><dd id="wxRain">--%</dd></div>
+            </dl>
+          </aside>
+        </div>
+
+        <div class="wx-hours" id="wxHours" aria-label="Hourly"></div>
+        <p class="wx-updated" id="wxUpdated"></p>
+      </section>
+
+        <section class="card leave-plan" aria-label="Leave plan">
+        <header class="card-head">
+          <div class="card-title">Leave plan</div>
+          <div class="tag tag-sage" id="schoolState">School day</div>
+        </header>
+        <div class="leave-form">
+          <div class="field">
+            <label for="arrival" class="label">Arrival time</label>
+            <input id="arrival" type="time" value="08:45" />
           </div>
           <div class="field">
             <label for="commute" class="label">Commute (min)</label>
             <input id="commute" type="number" min="0" step="1" value="15" />
           </div>
+          <div class="field">
+            <label for="shoesLead" class="label">Shoes lead (min)</label>
+            <input id="shoesLead" type="number" min="0" step="1" value="5" />
           </div>
         </div>
         <div class="switch" style="margin-top:10px">
@@ -408,6 +670,20 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
     plus5:document.getElementById('plus5'),
+    wx:{
+      loc:document.getElementById('wxLocation'),
+      temp:document.getElementById('wxTemp'),
+      icon:document.getElementById('wxIcon'),
+      cond:document.getElementById('wxCond'),
+      feels:document.getElementById('wxFeels'),
+      wind:document.getElementById('wxWind'),
+      hum:document.getElementById('wxHum'),
+      rain:document.getElementById('wxRain'),
+      hours:document.getElementById('wxHours'),
+      updated:document.getElementById('wxUpdated'),
+      cached:document.getElementById('wxCached'),
+      clothing:document.getElementById('clothing')
+    },
     wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
     commute:document.getElementById('commute'),
@@ -502,15 +778,16 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   async function fetchWeather(){
     document.querySelector('.weather-hero')?.classList.add('loading');
     const {lat,lon}=S.settings; const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode',daily:'temperature_2m_max,temperature_2m_min'});
+    const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,relativehumidity_2m,weathercode',daily:'temperature_2m_max,temperature_2m_min'});
     const url='https://api.open-meteo.com/v1/forecast?'+params.toString();
     let ok=true,data;
     try{ const res=await fetch(url,{cache:'no-store'}); ok=res.ok; data=await res.json() }catch(e){ ok=false }
     if(ok&&data){
-      const h=data.hourly; const c=data.current_weather; const d=data.daily; const idx8=hourIndex(h.time,8); const r8=idx8>=0?h.precipitation_probability[idx8]:0;
-      S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
-      save(); el.wx.cached.hidden=true
-    } else { el.wx.cached.hidden=false }
+      const h=data.hourly; const c=data.current_weather; const d=data.daily; const idx8=hourIndex(h.time,8); const r8=idx8>=0?h.precipitation_probability[idx8]:0; const idxNow=hourIndex(h.time,new Date().getHours());
+      const humidity = idxNow>=0 ? h.relativehumidity_2m[idxNow] : null;
+      S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), humidity:humidity!=null?Math.round(humidity):null, code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
+      save(); if(el.wx.cached) el.wx.cached.hidden=true
+    } else { if(el.wx.cached) el.wx.cached.hidden=false }
     document.querySelector('.weather-hero')?.classList.remove('loading');
     renderWeather(); recomputeTimes()
   }
@@ -524,36 +801,33 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     return Array.from(map.values());
   }
 
-  const WX_ICON=[[/thunder|storm/i,"⛈️"],[/snow|sleet|flurr/i,"❄️"],[/rain|shower/i,"🌧️"],[/hail/i,"🌨️"],[/fog|mist|haze/i,"🌫️"],[/overcast|cloudy/i,"☁️"],[/partly|mostly\s*clear|few clouds/i,"⛅️"],[/clear|sunny/i,"☀️"]];
-  function pickWxIcon(desc){ for(const [re,icon] of WX_ICON){ if(re.test(desc)) return icon; } return "🌡️"; }
 
   function renderWeather(){
     const W=S.wx;
-    el.wx.temp.textContent=(W.now??'--')+'°';
-    el.wx.desc.textContent=W.desc||'—';
-    el.wx.icon.textContent=pickWxIcon(W.desc||'');
-    el.wx.hi.textContent=(W.high??'--');
-    el.wx.lo.textContent=(W.low??'--');
-    el.wx.rain.textContent=(W.rain??'--')+'%';
+    el.wx.temp.textContent=W.now??'--';
+    el.wx.cond.textContent=W.desc||'—';
+    if(el.wx.icon){ el.wx.icon.src=W.icon||''; el.wx.icon.alt=W.desc||''; }
+    el.wx.feels.textContent=(W.now??'--')+'°';
+    el.wx.wind.textContent=W.wind!=null?`${W.wind} km/h`:'-- km/h';
+    el.wx.hum.textContent=W.humidity!=null?`${W.humidity}%`:'--%';
+    el.wx.rain.textContent=W.rain!=null?`${W.rain}%`:'--%';
     el.wx.loc.textContent=S.settings.place||'—';
     const picks=[7,10,13,16,19];
     el.wx.hours.innerHTML='';
     const frag=document.createDocumentFragment();
     picks.forEach(h=>{
-      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null,pop:null,code:null};
-      const cell=document.createElement('div'); cell.className='cell';
-      cell.innerHTML=`<div class="t">${hrLabel12(h)}</div><div class="v">${wxIcon(itm.code)} ${itm.temp??'--'}°</div><div class="t">${(itm.pop??'--')}%</div>`;
+      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null};
+      const cell=document.createElement('div');
+      cell.innerHTML=`<time>${hrLabel12(h)}</time><span>${itm.temp??'--'}°</span><span class="wx-dot" aria-hidden="true">•</span>`;
       frag.appendChild(cell);
     });
     el.wx.hours.appendChild(frag);
-    el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
-    const card=document.querySelector('.weather');
-    if(card){
-      card.classList.toggle('windy',(S.wx?.wind??0)>=28);
-      const foot=card.querySelector('.foot')||card.appendChild(document.createElement('div'));
-      foot.className='foot';
-      const ts=S.wx?.lastUpdated?new Date(S.wx.lastUpdated):new Date();
-      foot.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    if(el.wx.updated){
+      const ts=W.lastUpdated?new Date(W.lastUpdated):new Date();
+      el.wx.updated.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    }
+    if(el.wx.clothing){
+      el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
     }
   }
 
@@ -572,6 +846,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
     if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
     if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    updatePace(); renderTimeline(leave,shoes); updateMedState();
   }
 
   function updatePace(){
@@ -616,6 +891,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
 
       const tn=document.createElement('div'); tn.className='time-node num';
+      tn.textContent=timeHHMM(start);
+
       const card=document.createElement('div');
       if(t.special==='med'){
         card.className='cardlet med';
@@ -635,6 +912,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
           refreshTimelineStates();
         };
       } else {
+        card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
@@ -671,10 +949,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function updateMedState(){
     const med = S.todos.find(x=>x.special==='med');
     if(!med) return;
-    const node = el.timeline.querySelector('.cardlet.med');
-    if (!node) return;
-    node.classList.remove('armed','due','late');
-    if (med.done) return;
     let target;
     if (med.abs) target = hmToMinutes(parseHM(med.abs));
     else {
@@ -692,6 +966,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     else if (diff >= 0 && diff <= 5) state = 'due';
     else if (diff > 5) state = 'late';
 
+    const node = el.timeline.querySelector('.cardlet.med');
+    if (!node) return;
+    node.classList.remove('armed','due','late');
     if (state) node.classList.add(state);
   }
 
@@ -702,6 +979,14 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
       const card=document.createElement('div'); card.className='card';
       const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
+      const list=document.createElement('div'); list.className='backpacks-grid';
+      S.backpacks[key].forEach(item=>{
+        const btn=document.createElement('button');
+        btn.className='pack-chip';
+        btn.textContent=item.text;
+        btn.setAttribute('aria-pressed', item.done?'true':'false');
+        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
+        list.appendChild(btn);
       });
       card.appendChild(list);
       fragAll.appendChild(card);
@@ -807,7 +1092,15 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function isRain(code){ return [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(+code) }
   function isSnow(code){ return [71,73,75,77,85,86].includes(+code) }
   function wxDesc(code){ const m={0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Depositing rime fog',51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',56:'Freezing drizzle',57:'Dense freezing drizzle',61:'Slight rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Heavy freezing rain',71:'Slight snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Rain showers',81:'Heavy rain showers',82:'Violent rain showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm hail',99:'Thunderstorm hail'}; return m[code]||'—' }
-  function wxIcon(code){ if(isSnow(code))return'❄️'; if(isRain(code))return'🌧️'; if([0,1].includes(+code))return'☀️'; if([2].includes(+code))return'⛅'; if([3,45,48].includes(+code))return'☁️'; if([95,96,99].includes(+code))return'⛈️'; return'🌤️' }
+  function wxIcon(code){
+    if(isSnow(code))return'icons/weather/snow.svg';
+    if(isRain(code))return'icons/weather/rain.svg';
+    if([0,1].includes(+code))return'icons/weather/clear-day.svg';
+    if([2].includes(+code))return'icons/weather/partly-cloudy.svg';
+    if([3,45,48].includes(+code))return'icons/weather/cloudy.svg';
+    if([95,96,99].includes(+code))return'icons/weather/storm.svg';
+    return'icons/weather/clear-day.svg';
+  }
   function parseHM(str){ const[a,b]=str.split(':'); const h=+a||0; const m=+b||0; return {h,m} }
   function parseHM24(str){ const s=str.trim(); const ampm=s.slice(-2).toUpperCase(); if(ampm==='AM'||ampm==='PM'){ const [hhmm]=s.split(' '); let [h,m]=hhmm.split(':').map(n=>+n); if(ampm==='PM'&&h!==12) h+=12; if(ampm==='AM'&&h===12) h=0; return {h:h|0,m:m|0}; } return parseHM(s); }
   function hmToMinutes(hm){ return hm.h*60+hm.m }
