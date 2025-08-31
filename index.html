@@ -313,7 +313,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     return 'serviceWorker' in navigator && isTop && isSecure;
   }
   if (canUseSW()) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
 
   // ---------- Constants & helpers ----------
