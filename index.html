@@ -273,19 +273,60 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   border-color: color-mix(in oklab, #B6D2DA, #000 8%);
 }
 
-/* === Leave plan ========================================================= */
-.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
-.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
-.input{
-  background:#FFFEFD; border:1px solid var(--border);
-  border-radius:var(--radius); padding:10px 12px;
-  height:var(--field-h); text-align:center; width:100%;
+/* === Leave plan (iPad landscape tuning) ================================ */
+.leave-plan{ --line:rgba(0,0,0,.06); }
+.leave-grid{
+  grid-template-columns: 1.25fr 1fr 1fr 1fr;
+  gap: 14px 18px;
+  align-items: end;
 }
-.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
-input[type=number]{ -moz-appearance:textfield; }
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-.hint{ color:var(--muted); font-size:var(--fs-xs); }
+.input-bare{ height: 36px; font-size: 17px; padding: 6px 2px; }
+.input-num{ width: 64px; text-align: right; }
+.step{
+  height: 32px; min-width: 40px; padding: 0 10px;
+  border-radius: 12px;
+}
+.results{
+  grid-column: span 4;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px 16px;
+  align-items: center;
+  margin-top: 8px;
+}
+.result{
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display:flex; justify-content:space-between; align-items:center;
+  min-height: 48px;
+}
+.result .label{
+  display:flex; align-items:center; gap:8px;
+  font-size: 15px; color: rgba(0,0,0,.6);
+}
+.result strong{
+  font-weight:800; color: var(--sage);
+  letter-spacing:-0.02em; font-size: 22px;
+}
+.count-wrap{ display:grid; grid-auto-flow:column; align-items:center; gap:10px; }
+.ring{ width:40px; height:40px; }
+.count{ padding:10px 14px; border-radius:12px; font-weight:700; }
+.count-hint{ font-size:12px; color:rgba(0,0,0,.6); text-align:right; }
+.mini{ width:18px; height:18px; color: rgba(0,0,0,.55); }
+.leave-card{ margin-top:12px; }
+@media (orientation: landscape) and (max-width: 1180px){
+  .leave-grid{ grid-template-columns: 1.3fr 1fr 1fr 1fr; }
+  .results{ grid-template-columns:1fr 1fr auto; }
+  .result strong{ font-size:24px; }
+  .step{ height:36px; min-width:44px; }
+}
+@media (max-width: 980px){
+  .leave-grid{ grid-template-columns: repeat(2, minmax(160px,1fr)); }
+  .results{ grid-template-columns:1fr; }
+  .count-hint{ text-align:left; }
+}
 
 /* === Timeline =========================================================== */
 /* merged timeline */
@@ -483,23 +524,55 @@ main,
         <p class="wx-updated" id="wxUpdated"></p>
       </section>
 
-        <section class="card leave-plan" aria-label="Leave plan">
+        <section class="card leave-plan leave-card" aria-label="Leave plan">
         <header class="card-head">
           <div class="card-title">Leave plan</div>
           <div class="tag tag-sage" id="schoolState">School day</div>
         </header>
-        <div class="leave-form">
+        <div class="leave-grid">
           <div class="field">
-            <label for="arrival" class="label">Arrival time</label>
-            <input id="arrival" type="time" value="08:45" />
+            <label for="arrival" class="label">Arrival</label>
+            <input id="arrival" class="input-bare" type="time" value="08:45" />
           </div>
           <div class="field">
-            <label for="commute" class="label">Commute (min)</label>
-            <input id="commute" type="number" min="0" step="1" value="15" />
+            <label for="commute" class="label">Commute</label>
+            <div class="input-row">
+              <button class="step" data-target="commute" data-delta="-5" type="button">-</button>
+              <input id="commute" class="input-bare input-num" type="number" min="0" step="1" value="25" />
+              <button class="step" data-target="commute" data-delta="5" type="button">+</button>
+            </div>
           </div>
           <div class="field">
-            <label for="shoesLead" class="label">Shoes lead (min)</label>
-            <input id="shoesLead" type="number" min="0" step="1" value="5" />
+            <label for="shoesLead" class="label">Shoes lead</label>
+            <div class="input-row">
+              <button class="step" data-target="shoesLead" data-delta="-1" type="button">-</button>
+              <input id="shoesLead" class="input-bare input-num" type="number" min="0" step="1" value="5" />
+              <button class="step" data-target="shoesLead" data-delta="1" type="button">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="buffer" class="label">Buffer</label>
+            <div class="input-row">
+              <button class="step" data-target="buffer" data-delta="-1" type="button">-</button>
+              <input id="buffer" class="input-bare input-num" type="number" min="0" step="1" value="0" />
+              <button class="step" data-target="buffer" data-delta="1" type="button">+</button>
+            </div>
+          </div>
+
+          <div class="results">
+            <div class="result">
+              <div class="label"><svg class="mini"><use href="#ic-shoe"/></svg> Shoes</div>
+              <strong id="shoesAt">—</strong>
+            </div>
+            <div class="result">
+              <div class="label"><svg class="mini"><use href="#ic-door"/></svg> Leave</div>
+              <strong id="leaveAt">—</strong>
+            </div>
+            <div class="count-wrap">
+              <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="4" opacity="0.2"/><circle id="ringFill" cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="100" stroke-dashoffset="0"/></svg>
+              <div class="count" id="count">--</div>
+              <div class="count-hint">min</div>
+            </div>
           </div>
         </div>
         <div class="switch" style="margin-top:10px">
@@ -589,7 +662,7 @@ main,
 
   // ---------- Default state ----------
   const DEFAULT_STATE={
-    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
+    settings:{ arrival:'08:45', commuteMins:25, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
     wx:{now:null,high:null,low:null,rain:null,wind:null,code:null,desc:'',icon:'⛅',hours:[],lastUpdated:null},
     events:[],
     backpacks:{
@@ -669,6 +742,9 @@ main,
     todayDate:document.getElementById('todayDate'),
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
+    shoesAt:document.getElementById('shoesAt'),
+    leaveAt:document.getElementById('leaveAt'),
+    count:document.getElementById('count'),
     plus5:document.getElementById('plus5'),
     wx:{
       loc:document.getElementById('wxLocation'),
@@ -688,6 +764,7 @@ main,
     arrival:document.getElementById('arrival'),
     commute:document.getElementById('commute'),
     shoesLead:document.getElementById('shoesLead'),
+    buffer:document.getElementById('buffer'),
     schoolOut:document.getElementById('schoolOut'),
     schoolState:document.getElementById('schoolState'),
     timeline:document.getElementById('timeline'),
@@ -719,14 +796,30 @@ main,
 
   // ---------- Init UI ----------
   el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
+  el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins; el.buffer.value=currentFlags().extraBuffer;
   el.schoolOut.checked=!currentFlags().schoolDay; updateSchoolVisual();
 
-  el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
+  el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; el.buffer.value=currentFlags().extraBuffer; save(); recomputeTimes()};
   el.arrival.onchange=()=>{S.settings.arrival=el.arrival.value; save(); recomputeTimes()};
   el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
+  el.buffer.onchange=()=>{currentFlags().extraBuffer=+el.buffer.value; save(); recomputeTimes()};
   el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
+  document.querySelectorAll('.step').forEach(btn=>{
+    const tick=()=>{
+      const target=document.getElementById(btn.dataset.target);
+      const delta=parseInt(btn.dataset.delta,10);
+      target.value=Math.max(0,parseInt(target.value||0,10)+delta);
+      target.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    btn.addEventListener('click',e=>{e.preventDefault();tick();});
+    let hold;
+    btn.addEventListener('mousedown',()=>{tick();hold=setInterval(tick,160);});
+    btn.addEventListener('mouseup',()=>clearInterval(hold));
+    btn.addEventListener('mouseleave',()=>clearInterval(hold));
+    btn.addEventListener('touchstart',e=>{e.preventDefault();tick();hold=setInterval(tick,160);},{passive:false});
+    btn.addEventListener('touchend',()=>clearInterval(hold));
+  });
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
   el.exportBtn.onclick=exportJSON;
   const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
@@ -840,10 +933,14 @@ main,
     const buf=bufferByWeather(); const extra=currentFlags().extraBuffer|0;
     const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
-    el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
+    const shoesStr=hmToStr12(shoes);
+    const leaveStr=hmToStr12(leave);
+    el.tLeave.textContent=leaveStr; el.tShoes.textContent=shoesStr;
+    if(el.leaveAt) el.leaveAt.textContent=leaveStr;
+    if(el.shoesAt) el.shoesAt.textContent=shoesStr;
     const shoesEl=document.getElementById('shoesTime');
     const leaveEl=document.getElementById('leaveTime');
-    [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
+    [shoesEl,leaveEl].forEach(elm=>elm&&elm.closest('.times')?.classList.add('num'));
     if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
     if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
     updatePace(); renderTimeline(leave,shoes); updateMedState();
@@ -853,6 +950,7 @@ main,
     const now=new Date();
     const leaveHM=parseHM24(el.tLeave.textContent);
     const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
+    if(el.count) el.count.textContent = minsToLeave>0?`${minsToLeave}m`:'0m';
     let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
     const banner=document.querySelector('.status-banner');
     if(!banner) return;
