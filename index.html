@@ -876,6 +876,10 @@ main,
   function updateMedState(){
     const med = S.todos.find(x=>x.special==='med');
     if(!med) return;
+    const node = el.timeline.querySelector('.cardlet.med');
+    if (!node) return;
+    node.classList.remove('armed','due','late');
+    if (med.done) return;
     let target;
     if (med.abs) target = hmToMinutes(parseHM(med.abs));
     else {
@@ -893,9 +897,6 @@ main,
     else if (diff >= 0 && diff <= 5) state = 'due';
     else if (diff > 5) state = 'late';
 
-    const node = el.timeline.querySelector('.cardlet.med');
-    if (!node) return;
-    node.classList.remove('armed','due','late');
     if (state) node.classList.add(state);
   }
 
