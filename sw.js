@@ -4,7 +4,10 @@ const DATA  = 'dc-data-v1';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(SHELL).then(c => c.addAll(['/', '/index.html']))
+    caches.open(SHELL).then(c => {
+      const root = self.location.pathname.replace(/[^/]+$/, '');
+      return c.addAll([root, root + 'index.html']);
+    })
   );
 });
 
