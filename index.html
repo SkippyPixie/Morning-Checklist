@@ -1,1064 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Daily Command — iPad Rail</title>
-  <meta name="theme-color" content="#5C4433" />
-  <style>
-:root{
-  --parchment:#F6F1EB;
-  --card:#FFFEFC;
-  --sepia:#5C4433;
-  --sage:#9CAB86;
-  --mauve:#A1918B;
-  --ink:#2E2A27;
-  --muted:#7A6D66;
-  --border:#E7DED4;
-  --pill:#EEF2EA;
-  --gap:16px;
-  --pad:16px;
-  --radius:20px;
-  --row:56px;
-  --shadow-1:0 1px 2px rgba(0,0,0,.05);
-  --shadow-2:0 8px 24px rgba(0,0,0,.08);
-  --font: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --railW: clamp(360px, 28vw, 460px); /* more room without blowing up on big screens */
-  --ring:#C7D7C5;
-  --soft:#F7F3EE;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background: radial-gradient(70% 60% at 50% 0%, #FFFDF9 0%, var(--parchment) 80%);
-  color:var(--sepia);
-  font-family:var(--font);
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
-
-/* ---- App layout: grid with rail ---- */
-.app{ max-width:1200px; margin:0 auto; padding:24px var(--pad) 120px; }
-.layout{ display:flex; flex-direction:column; gap:var(--gap); }
-
-/* Two-column content grid under the sticky status */
-@media (min-width: 1024px){
-  .layout{
-    display: grid;
-    grid-template-columns: 1fr var(--railW);
-    gap: var(--gap);
-    align-items: start;               /* important: start align, no stretching */
-  }
-  /* Pin the right rail to column 2 and start at row 1, spanning all rows */
-  .layout > .rail{
-    grid-column: 2;
-    grid-row: 1 / span 999;
-    align-self: start;
-    position: sticky;
-    top: 12px;                        /* same top inset the status chip uses */
-  }
-}
-
-/* ---- Common UI ---- */
-.tag{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-weight:600; border:1px solid var(--border); background:#FFFDF9; color:var(--sepia); cursor:pointer; }
-.tag[aria-pressed="true"]{ background:var(--pill); }
-.tag-sage{ background:var(--pill); color:var(--sepia); }
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
-.tag{ background:#FBF6F1; border-color:#EADFD3; }
-.tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
-.card-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
-.card-title{ font-weight:700; font-size:22px; }
-.btn{ font-weight:700; border-radius:999px; padding:8px 14px; border:1px solid transparent; background:transparent; color:var(--sepia); cursor:pointer; }
-.btn:active{ transform:translateY(1px) }
-.btn-primary{ background:var(--sage); color:#fff; }
-.btn-ghost{ background:transparent; border:1px solid var(--border); }
-.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
-.hint{ color:var(--muted); font-size:15px; margin-top:8px; }
-:focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px; }
-
-/* ---- Weather ---- */
-.weather-hero .now{ display:flex; align-items:baseline; gap:10px; }
-.weather-hero .temp{ font-size:40px; font-weight:800; }
-.weather-hero .cond{ font-size:17px; color:var(--muted); }
-.weather-hero .stats{ display:flex; gap:16px; color:var(--muted); margin-top:6px; }
-.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .weather-mini{ opacity:.5; }
-.weather-hero.loading .temp::after{
-  content:'…'; margin-left:6px; font-weight:700; opacity:.8;
-}
-
-/* ---- Leave plan ---- */
-.settings-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.field label{ display:block; color:var(--muted); font-size:15px; margin-bottom:6px; }
-.field input{ height:48px; width:100%; border-radius:12px; border:1px solid var(--border); padding:10px 12px; font:inherit; color:var(--sepia); background:#fff; }
-.switch{ display:flex; align-items:center; gap:10px; }
-
-
-/* ---- Today strip ---- */
-.today-strip{ display:flex; justify-content:space-between; align-items:center; }
-.today-date{ font-size:28px; font-weight:900; }
-.today-tags{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.subtle{ color:var(--muted); }
-
-/* ---- Schedules & dialog ---- */
-.schedule-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-dialog.modal{
-  border:none; padding:0; border-radius:16px; overflow:hidden; max-width:min(90vw, 900px);
-  box-shadow: var(--shadow-2);
-}
-.modal header{ display:flex; justify-content:space-between; align-items:center; padding:12px var(--pad); background:#FFF; border-bottom:1px solid var(--border); }
-.modal .content{ background:#FAF9F7; padding:var(--pad); }
-.modal img{ max-width:100%; height:auto; display:block; border-radius:12px; border:1px solid var(--border); }
-
-/* ---- Toast ---- */
-.toast{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; z-index:9999; opacity:.95; }
-
-/* Motion safe */
-@media (prefers-reduced-motion: reduce){ *,*::before,*::after{ transition:none !important; animation:none !important; } }
-/* === Tokens ============================================================= */
-:root{
-  /* palette */
-  --parchment:#F6F1EB;
-  --card:#FFFEFC;
-  --sepia:#4F3C2F;
-  --muted:#6E625B;
-  --sage:#7FB086;
-  --mauve:#9B8D88;
-  --border:#E6DBCE;
-  --pill:#EEF4EC;
-  --railW: clamp(360px, 28vw, 460px);
-  --ring:#C7D7C5;
-  --soft:#F7F3EE;
-  --ink:#2E2A27;
-
-  /* layout + type */
-  --gap:16px;
-  --pad:16px;
-  --radius:18px;
-  --shadow-1: 0 1px 2px rgba(20,16,12,.06);
-  --shadow-2: 0 10px 28px rgba(20,16,12,.10);
-
-  --fs-xxs:11.5px;  /* AM/PM, tiny meta */
-  --fs-xs:13px;     /* chips, hints */
-  --fs-s:15px;      /* body */
-  --fs-m:17px;      /* buttons, dense labels */
-  --fs-l:22px;      /* section titles */
-  --fs-xl:40px;     /* weather temp */
-  --lh-tight:1.2;
-  --lh-base:1.45;
-}
-body{ font-size:var(--fs-s); line-height:var(--lh-base); color:var(--sepia); }
-h2.section{ font-size:var(--fs-l); font-weight:700; letter-spacing:-.01em; }
-small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
-.num{ font-variant-numeric: tabular-nums; }
-
-/* helpers */
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
-.card > header{ margin-bottom:12px; }
-.stack-8 > * + *{ margin-top:8px; }
-.stack-16 > * + *{ margin-top:16px; }
-.section-divider{ height:1px; background:color-mix(in oklab, var(--border), #000 5%); margin:12px 0; }
-
-/* === Chips / Tags unified ============================================== */
-.chip, .tag{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:6px 12px; border-radius:999px; font-size:var(--fs-xs);
-  background:var(--pill); border:1px solid var(--border); color:var(--sepia);
-}
-[aria-pressed="true"].chip{
-  background: color-mix(in oklab, var(--sage), #fff 85%);
-  border-color: color-mix(in oklab, var(--sage), #000 14%);
-}
-
-/* === Status banner ====================================================== */
-.status-banner{
-  position:sticky; top:8px; z-index:5;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  backdrop-filter:saturate(1.1) blur(8px);
-  background:color-mix(in oklab, var(--card), #ffffff 30%);
-  border:1px solid color-mix(in oklab, var(--border), #000 4%);
-  border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
-}
-.status-banner .left{ display:flex; align-items:center; gap:10px; }
-.status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
-.status-banner .times{ font-weight:600; }
-.status-banner .btn-plus{
-  min-width:36px; height:36px; border-radius:12px;
-  background:var(--pill); border:1px solid var(--border); font-weight:700;
-}
-.status-banner.late  .status-dot{ background:#E46464; }
-.status-banner.tight .status-dot{ background:#E6A64E; }
-.status-banner.ok    .status-dot{ background:#7FB086; }
-.status-banner.tight .btn-plus,
-.status-banner.late  .btn-plus{
-  background: color-mix(in oklab, var(--sage), #fff 78%);
-}
-
-/* === Weather card ======================================================= */
-.weather header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.weather .tools{ display:flex; align-items:center; gap:8px; }
-.weather-hero{ display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:12px; }
-.weather-hero .temp{ font-size:var(--fs-xl); font-weight:800; letter-spacing:-.015em; }
-.weather-hero .desc{ color:var(--muted); }
-.weather-mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
-.weather-mini .cell{
-  background:var(--pill); border:1px solid var(--border);
-  border-radius:12px; padding:10px 8px; text-align:center;
-}
-.weather-mini .t{ font-weight:600; }
-.weather .foot{ margin-top:10px; color:var(--muted); font-size:var(--fs-xs); }
-
-/* windy hint via class on .weather */
-.weather.windy header .tag{ 
-  background: color-mix(in oklab, #DDEBF0, #fff 60%);
-  border-color: color-mix(in oklab, #B6D2DA, #000 8%);
-}
-
-/* === Leave plan ========================================================= */
-.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
-.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
-.input{
-  background:#FFFEFD; border:1px solid var(--border);
-  border-radius:var(--radius); padding:10px 12px;
-  height:var(--field-h); text-align:center; width:100%;
-}
-.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
-input[type=number]{ -moz-appearance:textfield; }
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-.hint{ color:var(--muted); font-size:var(--fs-xs); }
-
-/* === Timeline =========================================================== */
-/* merged timeline */
-.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
-.timeline.dense{ gap:8px; }
-.timeline::before{
-  content:""; position:absolute; left:42px; top:0; bottom:0;
-  width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
-  background-size:2px 14px; border-radius:2px;
-}
-.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; }
-.time-node{
-  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
-  background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
-  font-size:12px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;
-}
-.step.now .time-node{
-  border-color: color-mix(in oklab, var(--sage), #000 10%);
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--sage), #fff 85%);
-}
-.step.due .cardlet{
-  background: var(--accent);
-  border: 1px solid var(--accent-border);
-  animation: pulse 1.6s ease-in-out infinite;
-}
-.step.done{ opacity:var(--done-fg); }
-.step.done .meta{ display:none; }
-.cardlet{
-  border:1px solid var(--border); border-radius:14px; padding:12px;
-  background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
-}
-.cardlet .label{ font-weight:600; white-space:normal; }
-.cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
-.cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
-.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
-.cardlet.med{
-  background: color-mix(in oklab, #FDF7F1, #fff 20%);
-  border-color: color-mix(in oklab, var(--mauve), #000 8%);
-}
-.cardlet.med.armed{ background:#F5FAF6; border-color:#D9EAD9; }
-.cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
-.cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
-.cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
-
-/* === Backpacks ========================================================== */
-.backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
-.pack-chip{
-  padding:10px 12px; border-radius:10px; line-height:1.2;
-  border:1px solid rgba(0,0,0,.06); background:#fff; text-align:left;
-  transition:background .2s ease, border-color .2s ease, opacity .2s ease;
-  color:var(--ink-900);
-}
-.pack-chip[aria-pressed="true"]{ opacity:.55; }
-
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion: reduce){ .step.due .cardlet{ animation:none; } }
-
-/* === Motion ============================================================= */
-@media (prefers-reduced-motion:no-preference){
-  .btn-plus:active{ transform:translateY(1px) scale(.98); }
-  .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
-  .chip{ transition: background-color .15s, border-color .15s; }
-}
-/* === SPACING NORMALIZATION PATCH — 2025-08-29 === */
-:root{
-  /* 8px scale */
-  --s-1: 4px;
-  --s-2: 8px;
-  --s-3: 12px;
-  --s-4: 16px;
-  --s-5: 24px;
-  --s-6: 32px;
-  --s-7: 48px;
-
-  /* app specifics */
-  --grid-gap: var(--s-6);       /* column gutter */
-  --card-pad: var(--s-5);       /* inner card padding */
-  --stack-gap: var(--s-4);      /* vertical rhythm inside cards */
-  --timeline-gap: var(--s-2);   /* space between timeline items */
-  --timeline-minh: 56px;        /* consistent row height */
-  --field-h:40px;
-  --radius:12px;
-  --accent:#EAE6FF;
-  --accent-border:#C8BFFF;
-  --done-fg:0.55;
-}
-
-/* two-column layout: left content + right timeline */
-main,
-.app-grid{
-  display: grid;
-  grid-template-columns: 1fr minmax(340px, 380px);
-  gap: var(--grid-gap);
-  align-items: start;
-}
-
-/* cards */
-.card{
-  padding: var(--card-pad);
-  border-radius: var(--radius);
-}
-.card > * + *{       /* vertical rhythm inside cards */
-  margin-top: var(--stack-gap);
-}
-
-/* make card stacks consistent */
-.section-stack > * + *{ margin-top: var(--stack-gap); }
-
-/* headings: tighten top, give breathing room below */
-.card h2,
-.card h3{
-  margin-top: 0;
-  margin-bottom: var(--s-3);
-  line-height: 1.2;
-}
-
-:root{
-  --sage:#9CAB86;
-  --sage-bg: rgba(156,171,134,.18);
-  --ink-900:#222;
-  --ink-700:#444;
-}
-
-
-/* keep meds item larger and tinted */
-
-.wx-hero{
-  display:grid; grid-template-columns:1fr; justify-items:center; row-gap:6px;
-  margin-bottom:10px;
-}
-.wx-temp{ font-size:42px; font-weight:700; line-height:1; }
-.wx-icon{ font-size:42px; transform:translateY(-2px); }
-.wx-desc{ color:var(--ink-700); font-weight:500; }
-
-.leave-form{
-  display:grid; grid-template-columns:1fr 110px 110px; gap:16px; align-items:end;
-}
-.leave-form .field label{ display:block; margin:0 0 6px; font-weight:600; }
-.leave-form input[type="time"],
-.leave-form input[type="number"]{
-  height:40px; border-radius:12px; text-align:center; width:100%;
-}
-.leave-buffers{ position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); }
-
-
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morning Leave Plan</title>
+<style>
+:root{--paper:#F6F1EB;--ink:#5C4433;--sage:#7A8C5F;--line:rgba(0,0,0,.10);--warn:#7a4b00;--warnbg:#fff5e6;--late:#7a1f1f;--latebg:#fdebec;--r:20px;--pad:24px;}
+body{margin:0;font-family:sans-serif;background:var(--paper);color:var(--ink);display:flex;justify-content:center;padding:40px;}
+.leave-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:var(--pad);box-shadow:0 2px 8px rgba(0,0,0,.06);max-width:800px;width:100%;}
+.lp-grid{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr;gap:14px 18px;align-items:end}
+.lp-field{display:flex;flex-direction:column;gap:6px;color:var(--ink);font-size:14px}
+.lp-input{background:transparent;border:none;border-bottom:1px dashed var(--line);padding:6px 2px;height:36px;font-size:17px;color:var(--ink);outline:none}
+.lp-input:focus{border-bottom:1px solid var(--sage)}
+.lp-input--num{width:64px;text-align:right}
+.lp-input--time{-webkit-appearance:none;appearance:none;line-height:1.2}
+.lp-input--time::-webkit-date-and-time-value{text-align:left}
+.lp-field--row .lp-inline{display:flex;align-items:center;gap:6px}
+.lp-step{border:1px solid var(--line);background:#fff;border-radius:12px;height:36px;min-width:44px;padding:0 10px;line-height:34px;font-size:14px;color:var(--ink)}
+.lp-unit{font-size:14px;color:rgba(0,0,0,.6)}
+.lp-results{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr auto;gap:12px 16px;align-items:center;margin-top:8px}
+.lp-result{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;min-height:48px}
+.lp-label{display:flex;align-items:center;gap:8px;font-size:15px;color:rgba(0,0,0,.6)}
+.lp-result strong{font-weight:800;color:var(--sage);letter-spacing:-0.02em;font-size:22px}
+.lp-countwrap{display:grid;grid-auto-flow:column;align-items:center;gap:10px;justify-self:end;text-align:right}
+.lp-ring{width:40px;height:40px}
+.lp-ring__track{fill:none;stroke:var(--line);stroke-width:4}
+.lp-ring__prog{fill:none;stroke:var(--sage);stroke-width:4;transform:rotate(-90deg);transform-origin:50% 50%}
+.lp-count{display:inline-block;padding:10px 14px;border-radius:12px;font-weight:700;background:#eaf5ec;color:#1e5c36}
+.lp-count--warn{background:var(--warnbg);color:var(--warn)}
+.lp-count--late{background:var(--latebg);color:var(--late)}
+.lp-counthint{font-size:12px;color:rgba(0,0,0,.6);margin-top:2px}
+@media (max-width:980px){.lp-grid{grid-template-columns:repeat(2,minmax(160px,1fr))}.lp-results{grid-template-columns:1fr}.lp-countwrap{justify-self:start;text-align:left}}
+</style>
 </head>
 <body>
-  <div class="app">
-    <section class="today-strip" aria-label="Today">
-      <div class="today-date" id="todayDate">Today</div>
-      <div class="today-tags">
-        <!-- Only School remains; pressed=true means "School day" -->
-        <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
-        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="ic-shoe" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M2 13v3h20v-2l-8-4-4 3H2z"/>
+  </symbol>
+  <symbol id="ic-door" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M3 2h18v20H3V2zm10 9a1 1 0 110 2 1 1 0 010-2z"/>
+  </symbol>
+</svg>
+<section class="leave-card" aria-label="Leave plan">
+  <div class="card-title" style="font-weight:700;font-size:22px;margin-bottom:12px;">Leave plan</div>
+  <div class="lp-grid">
+    <label class="lp-field">
+      <span>Arrival</span>
+      <input id="arriveTime" class="lp-input lp-input--time" type="time" value="08:45">
+    </label>
+
+    <label class="lp-field lp-field--row">
+      <span>Commute</span>
+      <div class="lp-inline">
+        <button type="button" class="lp-step" data-target="commuteMin" data-delta="-5">−5</button>
+        <input id="commuteMin" class="lp-input lp-input--num" type="number" min="0" value="25" inputmode="numeric">
+        <span class="lp-unit">min</span>
+        <button type="button" class="lp-step" data-target="commuteMin" data-delta="5">+5</button>
       </div>
-    </section>
+    </label>
 
-    <main class="app-grid">
-      <div class="left-stack">
-        <section class="card status-banner ok" role="region" aria-label="Status">
-          <div class="left">
-            <span class="status-dot" role="img" aria-label="On pace"></span>
-            <span class="pace-text">On pace</span>
-          </div>
-          <div class="times">
-            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
-          </div>
-          <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
-        </section>
-
-        <section class="card weather" aria-label="Weather" id="weatherCard">
-        <header>
-          <div class="card-title">Weather</div>
-          <div class="tools">
-            <span class="tag" id="wxLocation">Hamilton</span>
-            <button class="btn btn-ghost" id="wxRefresh" aria-label="Refresh weather" type="button">Refresh</button>
-            <button class="btn btn-ghost" id="wxUseLoc" aria-label="Use my location">Use location</button>
-          </div>
-        </header>
-        <div class="wx-hero">
-          <div class="wx-temp" id="wx-temp">--°</div>
-          <div class="wx-icon" id="wx-icon" aria-hidden="true">🌡️</div>
-          <div class="wx-desc" id="wx-desc">—</div>
-        </div>
-        <div class="stats">
-          <div>H <b id="wxHi">--</b>°</div>
-          <div>L <b id="wxLo">--</b>°</div>
-          <div>Rain <b id="wxRain">--%</b></div>
-        </div>
-        <div class="weather-mini" id="wxHours" aria-label="Mini forecast 5 points"></div>
-        <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
-        <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
-      </section>
-
-        <section class="card leave-plan" aria-label="Leave plan">
-        <header class="card-head">
-          <div class="card-title">Leave plan</div>
-          <div class="tag tag-sage" id="schoolState">School day</div>
-        </header>
-        <div class="leave-form">
-          <div class="field">
-            <label for="arrival" class="label">Arrival time</label>
-            <input id="arrival" type="time" value="08:45" />
-          </div>
-          <div class="field">
-            <label for="commute" class="label">Commute (min)</label>
-            <input id="commute" type="number" min="0" step="1" value="15" />
-          </div>
-          <div class="field">
-            <label for="shoesLead" class="label">Shoes lead (min)</label>
-            <input id="shoesLead" type="number" min="0" step="1" value="5" />
-          </div>
-        </div>
-        <div class="switch" style="margin-top:10px">
-          <input id="schoolOut" type="checkbox" />
-          <label for="schoolOut">School's Out (PA day)</label>
-        </div>
-        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
-      </section>
-
-        <section class="card backpacks" aria-label="Backpacks" id="backpacks">
-        <header class="card-head"><div class="card-title">Backpacks</div></header>
-        <div class="backpacks-grid" id="packs"></div>
-        <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-          <span>Tap items to toggle; changes persist.</span>
-          <button class="btn btn-ghost" id="resetPacks">Reset checks</button>
-        </div>
-      </section>
-
-        <section class="card" aria-label="Schedules">
-        <header class="card-head"><div class="card-title">Class schedules</div></header>
-        <div class="schedule-actions">
-          <div>
-            <div><b>Onyx</b></div>
-            <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="onyxView">View</button>
-            <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
-          </div>
-          <div>
-            <div><b>Peregrine</b></div>
-            <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="pereView">View</button>
-            <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
-          </div>
-        </div>
-        <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
-      </section>
-
-        <section class="card utilities" aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
-          <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
-          <div class="hint">Offline-first; caches shell & last weather.</div>
-        </section>
+    <label class="lp-field lp-field--row">
+      <span>Shoes lead</span>
+      <div class="lp-inline">
+        <button type="button" class="lp-step" data-target="shoesLeadMin" data-delta="-1">−1</button>
+        <input id="shoesLeadMin" class="lp-input lp-input--num" type="number" min="0" value="5" inputmode="numeric">
+        <span class="lp-unit">min</span>
+        <button type="button" class="lp-step" data-target="shoesLeadMin" data-delta="1">+1</button>
       </div>
+    </label>
 
-      <aside class="right-stack">
-        <section class="card" aria-label="Morning timeline">
-          <header class="card-head">
-            <div class="card-title">Morning Timeline</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn btn-ghost" id="addTask">+ Task</button>
-              <button class="btn btn-ghost" id="toggleDense">Dense</button>
-            </div>
-          </header>
-          <div id="timeline"></div>
-        </section>
-      </aside>
-    </main>
+    <label class="lp-field lp-field--row">
+      <span>Buffer</span>
+      <div class="lp-inline">
+        <button type="button" class="lp-step" data-target="extraBufferMin" data-delta="-5">−5</button>
+        <input id="extraBufferMin" class="lp-input lp-input--num" type="number" min="0" value="0" inputmode="numeric">
+        <span class="lp-unit">min</span>
+        <button type="button" class="lp-step" data-target="extraBufferMin" data-delta="5">+5</button>
+      </div>
+    </label>
+
+    <div class="lp-results">
+      <div class="lp-result">
+        <div class="lp-label"><svg class="lp-mini"><use href="#ic-shoe"/></svg> Shoes</div>
+        <strong id="shoesAt">—</strong>
+      </div>
+      <div class="lp-result">
+        <div class="lp-label"><svg class="lp-mini"><use href="#ic-door"/></svg> Leave by</div>
+        <strong id="leaveBy">—</strong>
+      </div>
+      <div class="lp-countwrap">
+        <svg class="lp-ring" viewBox="0 0 36 36" aria-hidden="true">
+          <circle class="lp-ring__track" cx="18" cy="18" r="16"></circle>
+          <circle class="lp-ring__prog" cx="18" cy="18" r="16"></circle>
+        </svg>
+        <div id="leaveCountdown" class="lp-count">—</div>
+        <div id="slackLabel" class="lp-counthint">No extra buffer</div>
+      </div>
+    </div>
   </div>
+</section>
 
-  <!-- Reusable modal for viewing schedule image -->
-  <dialog id="imgModal" class="modal">
-    <header>
-      <div>Schedule</div>
-      <button class="btn btn-ghost" id="modalClose">Close</button>
-    </header>
-    <div class="content"><img id="modalImg" alt="Uploaded schedule image" /></div>
-  </dialog>
+<script>
+(function(){
+  const $  = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
 
-  <script>
-  // ---------- SW registration (Pages-safe) ----------
-  function canUseSW(){
-    const isTop = self === top;
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
-    return 'serviceWorker' in navigator && isTop && isSecure;
-  }
-  if (canUseSW()) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  }
+  const arrive=$('#arriveTime'), commute=$('#commuteMin'), shoesLead=$('#shoesLeadMin'), extra=$('#extraBufferMin');
+  const shoesAtEl=$('#shoesAt'), leaveByEl=$('#leaveBy'), countdownEl=$('#leaveCountdown'), slackEl=$('#slackLabel'), updatedEl=$('#planUpdated');
 
-  // ---------- Constants & helpers ----------
-  const KEY='dc.v3';
-  const todayLocalISO=()=>{const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
+  const ringProg=document.querySelector('.lp-ring__prog'); const R=16, CIRC=2*Math.PI*R;
+  if(ringProg){ ringProg.setAttribute('stroke-dasharray', CIRC); ringProg.setAttribute('stroke-dashoffset', CIRC); }
 
-  const BOTTLE_SVG = `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M9 2h6v2a2 2 0 0 1-2 2v2h2.5A2.5 2.5 0 0 1 18 10.5v8A3.5 3.5 0 0 1 14.5 22h-5A3.5 3.5 0 0 1 6 18.5v-8A2.5 2.5 0 0 1 8.5 8H11V6a2 2 0 0 1-2-2V2zm-1 9v2h8v-2H8z"/>
-    </svg>`;
-
-  // ---------- Default state ----------
-  const DEFAULT_STATE={
-    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
-    wx:{now:null,high:null,low:null,rain:null,wind:null,code:null,desc:'',icon:'⛅',hours:[],lastUpdated:null},
-    events:[],
-    backpacks:{
-      onyx:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}],
-      peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
-    },
-    todos:[
-      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
-      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
-      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
-      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
-      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
-      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
-      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
-      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
-      {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
-      {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
-      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
-      {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
-    ],
-    dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
-    rules:[],
-    schedules:{ onyx:{imageKey:null}, peregrine:{imageKey:null} },
-    meta:{lastOpen:todayLocalISO()}
-  };
-
-  const PACK_DEFAULTS = ['Lunch','Love note','Water bottle','Forms','Agenda'];
-
-  // ---------- State load/migrate ----------
-  function migrate(s){
-    const out=structuredClone(DEFAULT_STATE);
-    Object.assign(out,s||{});
-    Object.assign(out.settings,s?.settings||{});
-    if(s?.backpacks){
-      out.backpacks.onyx=s.backpacks.onyx??out.backpacks.onyx;
-      out.backpacks.peregrine=s.backpacks.peregrine??out.backpacks.peregrine;
-    }
-    out.rules = Array.isArray(s?.rules) ? s.rules : [];
-    out.schedules = s?.schedules ?? out.schedules;
-    return out;
-  }
-  function load(){ try{const parsed=JSON.parse(localStorage.getItem(KEY)); if(!parsed) return structuredClone(DEFAULT_STATE); return migrate(parsed) }catch{return structuredClone(DEFAULT_STATE)} }
-  function save(){ localStorage.setItem(KEY,JSON.stringify(S)) }
-
-  // ---------- IndexedDB for images ----------
-  const DB='dc-media', STORE='images';
-  function idbOpen(){
-    return new Promise((res,rej)=>{
-      const req=indexedDB.open(DB,1);
-      req.onupgradeneeded=e=>{ e.target.result.createObjectStore(STORE) };
-      req.onsuccess=e=>res(e.target.result);
-      req.onerror=()=>rej(req.error);
-    });
-  }
-  async function idbPut(key,blob){
-    const db=await idbOpen();
-    return new Promise((res,rej)=>{
-      const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(blob,key);
-      tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
-    });
-  }
-  async function idbGet(key){
-    const db=await idbOpen();
-    return new Promise((res,rej)=>{
-      const tx=db.transaction(STORE,'readonly'); const rq=tx.objectStore(STORE).get(key);
-      rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error);
-    });
-  }
-
-  // ---------- Boot ----------
-  let S=load();
-  dailyRollover();
-  ensureBackpackDefaults(); save();
-
-  // ---------- Elements ----------
-  const el={
-    todayDate:document.getElementById('todayDate'),
-    tShoes:document.getElementById('shoesTime'),
-    tLeave:document.getElementById('leaveTime'),
-    plus5:document.getElementById('plus5'),
-    wx:{ loc:document.getElementById('wxLocation'), temp:document.getElementById('wx-temp'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), hi:document.getElementById('wxHi'), lo:document.getElementById('wxLo'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing') },
-    wxUseLoc:document.getElementById('wxUseLoc'),
-    arrival:document.getElementById('arrival'),
-    commute:document.getElementById('commute'),
-    shoesLead:document.getElementById('shoesLead'),
-    schoolOut:document.getElementById('schoolOut'),
-    schoolState:document.getElementById('schoolState'),
-    timeline:document.getElementById('timeline'),
-    addTask:document.getElementById('addTask'),
-    toggleDense:document.getElementById('toggleDense'),
-    packs:document.getElementById('packs'),
-    resetPacks:document.getElementById('resetPacks'),
-    exportBtn:document.getElementById('exportBtn'),
-    quickAdd:document.getElementById('quickAdd'),
-    tagsBar:document.querySelector('.today-tags'),
-    schoolChip:document.querySelector('[data-tag="school"]'),
-    onyxImport:document.getElementById('onyxImport'),
-    onyxView:document.getElementById('onyxView'),
-    onyxAddEvent:document.getElementById('onyxAddEvent'),
-    pereImport:document.getElementById('pereImport'),
-    pereView:document.getElementById('pereView'),
-    pereAddEvent:document.getElementById('pereAddEvent'),
-    modal:document.getElementById('imgModal'),
-    modalImg:document.getElementById('modalImg'),
-    modalClose:document.getElementById('modalClose')
-  };
-
-  document.querySelectorAll('input[type="number"]').forEach(inp=>{
-    inp.setAttribute('inputmode','numeric');
-    inp.setAttribute('pattern','[0-9]*');
-    inp.classList.add('input');
-  });
-  el.arrival?.classList.add('input');
-
-  // ---------- Init UI ----------
-  el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
-  el.schoolOut.checked=!currentFlags().schoolDay; updateSchoolVisual();
-
-  el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
-  el.arrival.onchange=()=>{S.settings.arrival=el.arrival.value; save(); recomputeTimes()};
-  el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
-  el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
-  el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
-  el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
-  el.exportBtn.onclick=exportJSON;
-  const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
-  if (el.wxUseLoc) {
-    el.wxUseLoc.onclick=()=>{
-      if (!navigator.geolocation) { alert('Geolocation not available'); return; }
-      navigator.geolocation.getCurrentPosition(pos=>{
-        S.settings.lat = pos.coords.latitude;
-        S.settings.lon = pos.coords.longitude;
-        S.settings.place = 'Current';
-        save(); fetchWeather();
-      }, ()=>alert('Could not get location.'));
-    };
-  }
-  el.quickAdd.onclick=()=>{const t=prompt('Event title for today?'); if(!t) return; const id='e'+Math.random().toString(36).slice(2,8); const d=todayLocalISO(); S.events.push({id,date:d,title:t,tags:[]}); save(); toast('Added: '+t)};
-
-  el.schoolChip.addEventListener('click', toggleSchoolChip);
-  el.tagsBar.addEventListener('keydown',e=>{
-    if((e.key==='Enter'||e.key===' ')&&e.target===el.schoolChip){e.preventDefault(); toggleSchoolChip();}
+  // steppers (tap or press-and-hold)
+  $$('.lp-step').forEach(btn=>{
+    let hold;
+    const tick=()=>{ const t=document.getElementById(btn.dataset.target); const d=+btn.dataset.delta; t.value=Math.max(0,(+t.value||0)+d); calc(); };
+    btn.addEventListener('mousedown', ()=>{tick(); hold=setInterval(tick,160);});
+    btn.addEventListener('mouseup',   ()=> clearInterval(hold));
+    btn.addEventListener('mouseleave',()=> clearInterval(hold));
+    btn.addEventListener('touchstart',(e)=>{e.preventDefault(); tick(); hold=setInterval(tick,160);},{passive:false});
+    btn.addEventListener('touchend',  ()=> clearInterval(hold));
   });
 
-  el.onyxImport.onclick=()=>importSchedule('onyx');
-  el.pereImport.onclick=()=>importSchedule('peregrine');
-  el.onyxView.onclick=()=>viewSchedule('onyx');
-  el.pereView.onclick=()=>viewSchedule('peregrine');
-  el.onyxAddEvent.onclick=()=>addRuleInteractive('onyx');
-  el.pereAddEvent.onclick=()=>addRuleInteractive('peregrine');
-  el.modalClose.onclick=()=>el.modal.close();
-  if (el.addTask) el.addTask.onclick = addTaskInteractive;
-  if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
-  const statusEl = document.querySelector('.status-banner');
-  statusEl?.classList.add('is-sticky');
+  [arrive,commute,shoesLead,extra].forEach(el=>el.addEventListener('input', calc));
 
-  recomputeTimes();
-  renderTimeline();
-  renderBackpacks();
-  fetchWeather();
-  renderRuleChips();
-  startMinuteAlignedTick();
-
-  // ---------- Day flags & rollover ----------
-  function currentFlags(){ const d=todayLocalISO(); if(!S.dayFlags[d]) S.dayFlags[d]={schoolDay:true,extraBuffer:0}; return S.dayFlags[d] }
-  function dailyRollover(){ const d=todayLocalISO(); if(S.meta.lastOpen!==d){ S.todos.forEach(t=>t.done=false); ['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); S.dayFlags[d]={schoolDay:true,extraBuffer:0}; S.meta.lastOpen=d; save() }}
-  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':"School's Out"; }
-
-  // ---------- Weather ----------
-  function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
-
-  async function fetchWeather(){
-    document.querySelector('.weather-hero')?.classList.add('loading');
-    const {lat,lon}=S.settings; const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode',daily:'temperature_2m_max,temperature_2m_min'});
-    const url='https://api.open-meteo.com/v1/forecast?'+params.toString();
-    let ok=true,data;
-    try{ const res=await fetch(url,{cache:'no-store'}); ok=res.ok; data=await res.json() }catch(e){ ok=false }
-    if(ok&&data){
-      const h=data.hourly; const c=data.current_weather; const d=data.daily; const idx8=hourIndex(h.time,8); const r8=idx8>=0?h.precipitation_probability[idx8]:0;
-      S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
-      save(); el.wx.cached.hidden=true
-    } else { el.wx.cached.hidden=false }
-    document.querySelector('.weather-hero')?.classList.remove('loading');
-    renderWeather(); recomputeTimes()
+  function calc(){
+    const arr=toMin(arrive.value), leave=arr - n(commute) - n(extra), shoes=leave - n(shoesLead);
+    shoesAtEl.textContent=fmt(shoes); leaveByEl.textContent=fmt(leave);
+    const buf=n(extra); slackEl.textContent=buf>0?`+${buf} min buffer`:'No extra buffer';
+    if(updatedEl) updatedEl.textContent=new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    paint(leave);
   }
 
-  function sliceHours(h){
-    const map=new Map(); const d0=todayLocalISO()+"T";
-    for(let i=0;i<h.time.length;i++){
-      const t=h.time[i]; if(!t.startsWith(d0)) continue; const hr=+t.slice(11,13);
-      if(hr>=7&&hr<=19){ map.set(hr,{hr, time:String(hr).padStart(2,'0')+':00', temp:h.temperature_2m[i]!=null?Math.round(h.temperature_2m[i]):null, pop:h.precipitation_probability[i]??null, code:h.weathercode[i]??null, wind:h.wind_speed_10m[i]!=null?Math.round(h.wind_speed_10m[i]):null}); }
-    }
-    return Array.from(map.values());
+  function paint(leave){
+    const now=new Date(), nowMin=now.getHours()*60+now.getMinutes(), diff=Math.round(leave-nowMin);
+    let cls='lp-count', label='';
+    if(diff>5){ label=`Leave in ${diff} min`; }
+    else if(diff>=0){ label=`Leave in ${diff} min`; cls+=' lp-count--warn'; }
+    else { label=`Late by ${Math.abs(diff)} min`; cls+=' lp-count--late'; }
+    countdownEl.className=cls; countdownEl.textContent=label;
+
+    if(ringProg){ const WINDOW=30, p=Math.max(0,Math.min(1,1-(diff/WINDOW))); ringProg.setAttribute('stroke-dashoffset', String(CIRC*(1-p))); }
   }
 
-  const WX_ICON=[[/thunder|storm/i,"⛈️"],[/snow|sleet|flurr/i,"❄️"],[/rain|shower/i,"🌧️"],[/hail/i,"🌨️"],[/fog|mist|haze/i,"🌫️"],[/overcast|cloudy/i,"☁️"],[/partly|mostly\s*clear|few clouds/i,"⛅️"],[/clear|sunny/i,"☀️"]];
-  function pickWxIcon(desc){ for(const [re,icon] of WX_ICON){ if(re.test(desc)) return icon; } return "🌡️"; }
+  function n(el){ return parseInt(el.value||0,10); }
+  function toMin(hm){ const [h,m]=(hm||'00:00').split(':').map(Number); return h*60+m; }
+  function fmt(mins){ let h=Math.floor(mins/60)%24; if(h<0) h=(24+(h%24))%24; let m=Math.abs(mins%60); const am=h>=12?'PM':'AM', h12=h%12===0?12:h%12; return `${h12}:${String(m).padStart(2,'0')} ${am}`; }
 
-  function renderWeather(){
-    const W=S.wx;
-    el.wx.temp.textContent=(W.now??'--')+'°';
-    el.wx.desc.textContent=W.desc||'—';
-    el.wx.icon.textContent=pickWxIcon(W.desc||'');
-    el.wx.hi.textContent=(W.high??'--');
-    el.wx.lo.textContent=(W.low??'--');
-    el.wx.rain.textContent=(W.rain??'--')+'%';
-    el.wx.loc.textContent=S.settings.place||'—';
-    const picks=[7,10,13,16,19];
-    el.wx.hours.innerHTML='';
-    const frag=document.createDocumentFragment();
-    picks.forEach(h=>{
-      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null,pop:null,code:null};
-      const cell=document.createElement('div'); cell.className='cell';
-      cell.innerHTML=`<div class="t">${hrLabel12(h)}</div><div class="v">${wxIcon(itm.code)} ${itm.temp??'--'}°</div><div class="t">${(itm.pop??'--')}%</div>`;
-      frag.appendChild(cell);
-    });
-    el.wx.hours.appendChild(frag);
-    el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
-    const card=document.querySelector('.weather');
-    if(card){
-      card.classList.toggle('windy',(S.wx?.wind??0)>=28);
-      const foot=card.querySelector('.foot')||card.appendChild(document.createElement('div'));
-      foot.className='foot';
-      const ts=S.wx?.lastUpdated?new Date(S.wx.lastUpdated):new Date();
-      foot.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
-    }
-  }
-
-  function bufferByWeather(){ if(!currentFlags().schoolDay) return 0; const code=S.wx.code; if(isSnow(code)) return 15; if(isRain(code)) return 10; return 0 }
-
-  // ---------- Time math ----------
-  function recomputeTimes(){
-    const arr=parseHM(S.settings.arrival);
-    const commute=S.settings.commuteMins|0; const shoesLead=S.settings.shoesLeadMins|0;
-    const buf=bufferByWeather(); const extra=currentFlags().extraBuffer|0;
-    const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
-    const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
-    el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
-    const shoesEl=document.getElementById('shoesTime');
-    const leaveEl=document.getElementById('leaveTime');
-    [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
-    if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
-    if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
-    updatePace(); renderTimeline(leave,shoes); updateMedState();
-  }
-
-  function updatePace(){
-    const now=new Date();
-    const leaveHM=parseHM24(el.tLeave.textContent);
-    const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
-    let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
-    const banner=document.querySelector('.status-banner');
-    if(!banner) return;
-    const paceText=banner.querySelector('.pace-text');
-    if(paceText) paceText.textContent=status;
-    const label=status.toLowerCase();
-    banner.classList.remove('late','tight','ok');
-    let state='ok';
-    if(label.includes('late')) state='late';
-    else if(label.includes('tight')) state='tight';
-    banner.classList.add(state);
-    const dot=banner.querySelector('.status-dot');
-    if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
-  }
-
-  // ---------- Timeline + Med states ----------
-
-  function renderTimeline(leaveHM,shoesHM){
-    const rail=document.getElementById('timeline');
-    if(!rail) return;
-    rail.classList.add('timeline');
-    const L=leaveHM||parseHM24(el.tLeave.textContent);
-    const SH=shoesHM||parseHM24(el.tShoes.textContent);
-    const tasks=[...S.todos].sort((a,b)=> taskStartMinutes(L,SH,a) - taskStartMinutes(L,SH,b));
-    rail.innerHTML='';
-    const frag=document.createDocumentFragment();
-    tasks.forEach(t=>{
-      let start=null,end=null;
-      if(t.range){ const parts=t.range.replace('–','-').split('-'); start=parseHM(parts[0]); end=parseHM(parts[1]); }
-      else if(t.abs){ start=parseHM(t.abs); end=start; }
-      else if(t.rel==='leave'){ start=minutesToHM(hmToMinutes(L)+(t.offset||0)); end=start; }
-      else if(t.rel==='shoes'){ start=minutesToHM(hmToMinutes(SH)+(t.offset||0)); end=start; }
-
-      const step=document.createElement('div');
-      step.className='step'+(t.done?' done':'')+(t.special==='med'?' med':'');
-      step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
-
-      const tn=document.createElement('div'); tn.className='time-node num';
-      tn.textContent=timeHHMM(start);
-
-      const card=document.createElement('div');
-      if(t.special==='med'){
-        card.className='cardlet med';
-        const bottle=document.createElement('div'); bottle.className='bottle'; bottle.innerHTML=BOTTLE_SVG;
-        const info=document.createElement('div'); info.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
-        card.append(bottle,info);
-        const actions=document.createElement('div'); actions.className='actions';
-        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
-        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
-        actions.appendChild(del); card.appendChild(actions);
-        card.onclick=()=>{
-          if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
-          t.done=!t.done; save();
-          step.classList.toggle('done',t.done);
-          if(t.done) step.classList.remove('due');
-          updateMedState();
-          refreshTimelineStates();
-        };
-      } else {
-        card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
-        const actions=document.createElement('div'); actions.className='actions';
-        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
-        del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
-        actions.appendChild(del); card.appendChild(actions);
-        card.onclick=()=>{
-          t.done=!t.done; save();
-          step.classList.toggle('done',t.done);
-          card.setAttribute('aria-checked',t.done?'true':'false');
-          if(t.done) step.classList.remove('due');
-          refreshTimelineStates();
-        };
-      }
-
-      step.appendChild(tn); step.appendChild(card); frag.appendChild(step);
-    });
-    rail.appendChild(frag);
-    refreshTimelineStates();
-  }
-
-  function refreshTimelineStates(){
-    const rows=Array.from(el.timeline.querySelectorAll('.step'));
-    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-    let upNext=-1,best=1e9;
-    rows.forEach((r,i)=>{
-      const [hh,mm]=r.dataset.target.split(':').map(n=>+n); const m=hh*60+mm;
-      const diff=m-nowM;
-      r.classList.remove('now','due');
-      if(diff<0 && !r.classList.contains('done')){ r.classList.add('due'); }
-      else if(diff>=0 && diff<best && !r.classList.contains('done')){ best=diff; upNext=i; }
-    });
-    if(upNext>=0) rows[upNext].classList.add('now');
-  }
-
-  function updateMedState(){
-    const med = S.todos.find(x=>x.special==='med');
-    if(!med) return;
-    let target;
-    if (med.abs) target = hmToMinutes(parseHM(med.abs));
-    else {
-      const L=parseHM24(el.tLeave.textContent), SH=parseHM24(el.tShoes.textContent);
-      if (med.rel==='leave') target = hmToMinutes(L)+(med.offset||0);
-      else if (med.rel==='shoes') target = hmToMinutes(SH)+(med.offset||0);
-    }
-    if (target==null) return;
-
-    const now = new Date(), nowM = now.getHours()*60 + now.getMinutes();
-    const diff = nowM - target;
-
-    let state = '';
-    if (diff < 0 && diff >= -10) state = 'armed';
-    else if (diff >= 0 && diff <= 5) state = 'due';
-    else if (diff > 5) state = 'late';
-
-    const node = el.timeline.querySelector('.cardlet.med');
-    if (!node) return;
-    node.classList.remove('armed','due','late');
-    if (state) node.classList.add(state);
-  }
-
-  // ---------- Backpacks ----------
-  function renderBackpacks(){
-    const grid=el.packs; grid.innerHTML='';
-    const fragAll=document.createDocumentFragment();
-    [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
-      const card=document.createElement('div'); card.className='card';
-      const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
-      const list=document.createElement('div'); list.className='backpacks-grid';
-      S.backpacks[key].forEach(item=>{
-        const btn=document.createElement('button');
-        btn.className='pack-chip';
-        btn.textContent=item.text;
-        btn.setAttribute('aria-pressed', item.done?'true':'false');
-        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
-        list.appendChild(btn);
-      });
-      card.appendChild(list);
-      fragAll.appendChild(card);
-    });
-    grid.appendChild(fragAll);
-    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":"School day";
-  }
-
-  // ---------- Rules -> chips ----------
-  function renderRuleChips(){
-    const bar=el.tagsBar;
-    bar.querySelectorAll('[data-chip="rule"]').forEach(n=>n.remove());
-    const today=todayLocalISO();
-    (S.rules||[]).filter(r=>{
-      const w=r.when||{};
-      return (w.date===today) || (Array.isArray(w.dates) && w.dates.includes(today));
-    }).forEach(r=>{
-      const chip=document.createElement('button');
-      chip.className='chip';
-      chip.dataset.chip='rule';
-      chip.textContent=r.title+(r.kid?` — ${capitalize(r.kid)}`:'');
-      chip.onclick=()=>applyRuleInteractive(r);
-      bar.insertBefore(chip, el.quickAdd);
-    });
-  }
-
-  function applyRuleInteractive(rule){
-    const ok=confirm(`“${rule.title}” today. Apply adjustments?`);
-    if(!ok) return;
-
-    const kid=rule.kid || prompt('Kid for backpack items? (onyx/peregrine or blank to skip)','')?.trim().toLowerCase();
-    if(kid==='onyx'||kid==='peregrine'){
-      const items=prompt('Backpack items to add (comma-separated) — leave blank to skip','')||'';
-      items.split(',').map(s=>s.trim()).filter(Boolean).forEach(it=>S.backpacks[kid].push({text:it,done:false}));
-    }
-
-    const addTimeline=confirm('Add a timeline item?');
-    if(addTimeline){
-      const text=prompt('Timeline item text','Reminder')||'Reminder';
-      const rel=prompt('When? Type one of: leave, shoes, or absolute HH:MM (24h).','leave')||'leave';
-      if(rel==='leave'||rel==='shoes'){
-        const off=parseInt(prompt('Offset minutes (e.g., -15 before, +5 after)','-10')||'0',10);
-        S.todos.push({id:'t'+Math.random().toString(36).slice(2),text,done:false,rel,offset:off});
-      } else {
-        const hm=parseHM(rel); S.todos.push({id:'t'+Math.random().toString(36).slice(2),text,done:false,abs:hmToStr24(hm)});
-      }
-    }
-    save(); renderBackpacks(); recomputeTimes(); renderTimeline(); toast('Applied: '+rule.title);
-  }
-
-  function addRuleInteractive(kid){
-    const title=prompt(`Title for ${capitalize(kid)}'s event:`, 'Wear Purple Day');
-    if(!title) return;
-    const rawDates=prompt('Date(s): enter YYYY-MM-DD or MM-DD, comma-separated.', todayLocalISO());
-    if(!rawDates) return;
-    const dates=rawDates.split(',').map(s=>s.trim()).map(toISODate).filter(Boolean);
-    if(!dates.length){ alert('No valid dates.'); return; }
-    S.rules.push({ id:'r'+Math.random().toString(36).slice(2,8), when:{dates}, kid, title, actions:[] });
-    save(); renderRuleChips(); toast('Event saved');
-  }
-
-  function addTaskInteractive(){
-    const text=prompt('Task text','Brush teeth'); if(!text) return;
-    const when=prompt('When? Examples: "07:05", "leave -10", "shoes +0", or "range 06:45-07:15"','leave -10'); if(!when) return;
-    const w=when.trim().toLowerCase(); let task=null;
-    if (w.startsWith('range ')){ const r=w.replace(/^range\s+/,'').replace('–','-'); if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) return alert('Use HH:MM-HH:MM'); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,range:r}; }
-    else if (/^\d{2}:\d{2}$/.test(w)){ task={id:'t'+Math.random().toString(36).slice(2),text,done:false,abs:w}; }
-    else if (w.startsWith('leave')||w.startsWith('shoes')){ const [rel,offStr]=w.split(/\s+/); const offset=parseInt(offStr||'0',10); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,rel,offset}; }
-    else return alert('Unrecognized time format.');
-    S.todos.push(task); save(); recomputeTimes(); renderTimeline(); updateMedState();
-  }
-
-  // ---------- Schedules (images) ----------
-  async function importSchedule(kid){
-    try{
-      const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
-      inp.onchange=async ()=>{
-        const file=inp.files[0]; if(!file) return;
-        const key=`schedule-${kid}`; await idbPut(key,file); S.schedules[kid].imageKey=key; save(); toast('Schedule saved for '+capitalize(kid));
-      };
-      inp.click();
-    }catch{ alert('Unable to import schedule on this browser.'); }
-  }
-  async function viewSchedule(kid){
-    const key=S.schedules[kid]?.imageKey; if(!key){ alert('No schedule uploaded for '+capitalize(kid)); return; }
-    const blob=await idbGet(key); if(!blob){ alert('Schedule not found in storage.'); return; }
-    const url=URL.createObjectURL(blob);
-    el.modalImg.src=url; el.modal.showModal();
-    el.modal.addEventListener('close',()=>URL.revokeObjectURL(url), {once:true});
-  }
-
-  // ---------- School chip toggle ----------
-  function toggleSchoolChip(){
-    const current = el.schoolChip.getAttribute('aria-pressed')==='true';
-    el.schoolChip.setAttribute('aria-pressed', String(!current));
-    currentFlags().schoolDay=!current;
-    el.schoolOut.checked = !currentFlags().schoolDay;
-    save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks();
-  }
-
-  // ---------- Utilities ----------
-  function clothingFor(code,tempC,pop,wind){ if(isSnow(code)||(isRain(code)&&tempC<=1)) return wind<28?'Hat, gloves, boots; umbrella OK':'Hat, gloves, boots; no umbrella (wind)'; if(isRain(code)){ const umb=wind<28?' + umbrella':' (no umbrella: wind)'; const hat=tempC<=15?' + hat':''; return 'Rain jacket, rain boots'+umb+hat } if(tempC<=10) return 'Hat + gloves + warm shoes'; if(tempC<=15) return 'Hat + running shoes'; return 'Running shoes' }
-  function isRain(code){ return [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(+code) }
-  function isSnow(code){ return [71,73,75,77,85,86].includes(+code) }
-  function wxDesc(code){ const m={0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Depositing rime fog',51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',56:'Freezing drizzle',57:'Dense freezing drizzle',61:'Slight rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Heavy freezing rain',71:'Slight snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Rain showers',81:'Heavy rain showers',82:'Violent rain showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm hail',99:'Thunderstorm hail'}; return m[code]||'—' }
-  function wxIcon(code){ if(isSnow(code))return'❄️'; if(isRain(code))return'🌧️'; if([0,1].includes(+code))return'☀️'; if([2].includes(+code))return'⛅'; if([3,45,48].includes(+code))return'☁️'; if([95,96,99].includes(+code))return'⛈️'; return'🌤️' }
-  function parseHM(str){ const[a,b]=str.split(':'); const h=+a||0; const m=+b||0; return {h,m} }
-  function parseHM24(str){ const s=str.trim(); const ampm=s.slice(-2).toUpperCase(); if(ampm==='AM'||ampm==='PM'){ const [hhmm]=s.split(' '); let [h,m]=hhmm.split(':').map(n=>+n); if(ampm==='PM'&&h!==12) h+=12; if(ampm==='AM'&&h===12) h=0; return {h:h|0,m:m|0}; } return parseHM(s); }
-  function hmToMinutes(hm){ return hm.h*60+hm.m }
-  function minutesToHM(mins){ let m=((mins%(24*60))+24*60)%(24*60); const h=Math.floor(m/60); return {h, m:m%60} }
-  function hmToStr12(hm){ const am=hm.h<12; let h=hm.h%12; if(h===0) h=12; const m=String(hm.m).padStart(2,'0'); return `${h}:${m} ${am?'AM':'PM'}` }
-  function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
-  function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
-  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
-  function taskStartMinutes(L,SH,t){
-    if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
-    if (t.abs)  return hmToMinutes(parseHM(t.abs));
-    if (t.rel==='leave') return hmToMinutes(L)+(t.offset||0);
-    if (t.rel==='shoes') return hmToMinutes(SH)+(t.offset||0);
-    return 24*60+999;
-  }
-  function formatRange12(rangeStr){ const parts = rangeStr.replace('–','-').split('-'); const A=parseHM(parts[0]); const B=parseHM(parts[1]||parts[0]); const sA=hmToStr12(A); const sB=hmToStr12(B); const pA=sA.slice(-2), pB=sB.slice(-2); const tA=sA.slice(0,-3), tB=sB.slice(0,-3); return pA===pB ? `${tA}–${tB} ${pA}` : `${tA} ${pA}–${tB} ${pB}`; }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])) }
-  const capitalize=s=>s? s[0].toUpperCase()+s.slice(1):'';
-  function toISODate(s){ const t=s.trim(); if(/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; if(/^\d{2}[-/]\d{2}([-/]\d{4})?$/.test(t)){ const [m,d,y]=t.replace(/\//g,'-').split('-'); const yr = y && y.length===4 ? +y : new Date().getFullYear(); return `${yr}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` } return null }
-
-  function ensureBackpackDefaults(){
-    const kids=['onyx','peregrine'];
-    kids.forEach(k=>{
-      if(!S.backpacks[k] || !Array.isArray(S.backpacks[k])) S.backpacks[k]=[];
-      const allEmpty = S.backpacks[k].length===0 || S.backpacks[k].every(it => !it || !it.text || it.text.trim()==='');
-      if(allEmpty) S.backpacks[k] = PACK_DEFAULTS.map(t=>({text:t,done:false}));
-    });
-  }
-
-  function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
-  function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
-
-  // ---------- Ticking ----------
-  function startMinuteAlignedTick(){
-    const tick=()=>{ updatePace(); refreshTimelineStates(); updateMedState(); renderRuleChips(); };
-    tick();
-    const delay=60000-(Date.now()%60000);
-    setTimeout(()=>{ tick(); setInterval(tick,60000); }, delay);
-  }
-  </script>
+  // Ensure default commute=25 at load
+  if(!commute.value || +commute.value===0) commute.value=25;
+  calc(); setInterval(calc, 30000);
+})();
+</script>
 </body>
 </html>
