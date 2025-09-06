@@ -225,10 +225,45 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
   .chip{ transition: background-color .15s, border-color .15s; }
 }
+
+:root{
+  --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px;
+  --radius: 16px;
+  --shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+
+.hero { margin-bottom: var(--space-3); }
+.hero h1 { font-size: clamp(28px,3.2vw,36px); line-height:1.2; margin:0; }
+.meta { display:flex; gap:8px; margin-top:6px; flex-wrap: wrap; }
+.chip { padding:6px 10px; border-radius:999px; border:1px solid rgba(0,0,0,.12); font-weight:600; }
+.chip.success { border-color: rgba(0,128,0,.25); }
+.chip.warn { border-color: rgba(200,150,0,.35); }
+.chip.danger { border-color: rgba(200,0,0,.35); }
+
+.banner { display:flex; align-items:center; gap:8px; padding:10px 12px;
+  border-radius:12px; background: rgba(0,0,0,.04); }
+
+.skeleton { position: relative; overflow: hidden; background: rgba(0,0,0,.06); }
+.skeleton::after {
+  content:""; position:absolute; inset:0;
+  transform: translateX(-100%); animation: shimmer 1.25s infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
   </style>
 </head>
 <body>
   <div class="app">
+    <header class="hero" role="region" aria-live="polite">
+      <h1 id="leaveBy">Leave by 8:20</h1>
+      <div class="meta" id="heroMeta" hidden>
+        <span class="chip" id="paceChip">On pace</span>
+        <span class="chip" id="countdownChip">12m left</span>
+        <span class="chip" id="bufferChip" hidden>Rain +10</span>
+        <span class="chip" id="prepChip" hidden>Shoes 08:15</span>
+      </div>
+    </header>
           <div class="times">
             <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
           </div>
@@ -242,9 +277,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
         </div>
         <div class="switch" style="margin-top:10px">
           <input id="schoolOut" type="checkbox" />
-          <label for="schoolOut">School's Out (PA day)</label>
+          <label for="schoolOut">No school today (PA day)</label>
         </div>
-        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
+        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. No school today removes buffers.</div>
       </section>
 
         <section class="card backpacks" aria-label="Backpacks" id="backpacks">
@@ -313,7 +348,17 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     return 'serviceWorker' in navigator && isTop && isSecure;
   }
   if (canUseSW()) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      function listenWaiting(w){ showUpdateToast(() => w.postMessage('SKIP_WAITING')); }
+      if (reg.waiting) listenWaiting(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) listenWaiting(nw);
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+    }).catch(()=>{});
   }
 
   // ---------- Constants & helpers ----------
@@ -399,6 +444,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   // ---------- Boot ----------
   let S=load();
+  window.state = S;
   dailyRollover();
   ensureBackpackDefaults(); save();
 
@@ -494,7 +540,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   // ---------- Day flags & rollover ----------
   function currentFlags(){ const d=todayLocalISO(); if(!S.dayFlags[d]) S.dayFlags[d]={schoolDay:true,extraBuffer:0}; return S.dayFlags[d] }
   function dailyRollover(){ const d=todayLocalISO(); if(S.meta.lastOpen!==d){ S.todos.forEach(t=>t.done=false); ['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); S.dayFlags[d]={schoolDay:true,extraBuffer:0}; S.meta.lastOpen=d; save() }}
-  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':"School's Out"; }
+  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':'No school today'; }
 
   // ---------- Weather ----------
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
@@ -509,6 +555,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     if(ok&&data){
       const h=data.hourly; const c=data.current_weather; const d=data.daily; const idx8=hourIndex(h.time,8); const r8=idx8>=0?h.precipitation_probability[idx8]:0;
       S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
+      window.state.cachedWeatherAt = S.wx.lastUpdated;
+      if (typeof uiState !== 'undefined') uiState.cachedWeatherAt = window.state.cachedWeatherAt;
       save(); el.wx.cached.hidden=true
     } else { el.wx.cached.hidden=false }
     document.querySelector('.weather-hero')?.classList.remove('loading');
@@ -572,12 +620,24 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
     if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
     if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    window.state.leaveAt = hmToStr24(leave);
+    window.state.weatherBuffer = buf + extra;
+    if (typeof uiState !== 'undefined') {
+      uiState.leaveAt = window.state.leaveAt;
+      uiState.weatherBuffer = window.state.weatherBuffer;
+      renderHero();
+    }
   }
 
   function updatePace(){
     const now=new Date();
     const leaveHM=parseHM24(el.tLeave.textContent);
     const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
+    if (typeof uiState !== 'undefined') {
+      uiState.minutesBehind = minsToLeave < 0 ? Math.abs(minsToLeave) : 0;
+      window.state.minutesBehind = uiState.minutesBehind;
+      renderHero();
+    }
     let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
     const banner=document.querySelector('.status-banner');
     if(!banner) return;
@@ -707,7 +767,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
-    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":"School day";
+    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"No school today":"School day";
   }
 
   // ---------- Rules -> chips ----------
@@ -839,6 +899,110 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
   function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
+
+  // ---- State adapters (READ ONLY fallbacks) ----
+  const uiState = {
+    leaveAt: window.state?.leaveAt ?? "08:20",
+    minutesBehind: window.state?.minutesBehind ?? 0,
+    weatherBuffer: window.state?.weatherBuffer ?? 0,
+    prepDeadline: window.state?.prepDeadline ?? null,
+    isOffline: typeof navigator !== "undefined" && !navigator.onLine,
+    cachedWeatherAt: window.state?.cachedWeatherAt ?? null
+  };
+
+  // ---- DOM refs ----
+  const leaveBy = document.getElementById("leaveBy");
+  const meta = document.getElementById("heroMeta");
+  const paceChip = document.getElementById("paceChip");
+  const countdownChip = document.getElementById("countdownChip");
+  const bufferChip = document.getElementById("bufferChip");
+  const prepChip = document.getElementById("prepChip");
+
+  // ---- Helpers ----
+  function hhmmToDateToday(hhmm){
+    const [h,m] = hhmm.split(":").map(Number);
+    const now = new Date();
+    const t = new Date(now); t.setHours(h, m, 0, 0);
+    return t;
+  }
+  function minutesUntil(hhmm){
+    const diffMs = hhmmToDateToday(hhmm) - new Date();
+    return Math.max(0, Math.round(diffMs / 60000));
+  }
+
+  // ---- Hero rendering ----
+  function renderHero(){
+    // Title
+    leaveBy.textContent = `Leave by ${uiState.leaveAt}`;
+
+    // Pace chip
+    const behind = Number(uiState.minutesBehind) || 0;
+    if (behind > 0) {
+      paceChip.textContent = `${behind}m behind`;
+      paceChip.classList.remove("success","danger","warn");
+      paceChip.classList.add(behind >= 10 ? "danger" : "warn");
+    } else {
+      paceChip.textContent = "On pace";
+      paceChip.classList.remove("warn","danger");
+      paceChip.classList.add("success");
+    }
+
+    // Countdown
+    countdownChip.textContent = `${minutesUntil(uiState.leaveAt)}m left`;
+
+    // Buffer chip
+    if (uiState.weatherBuffer > 0) {
+      bufferChip.hidden = false;
+      bufferChip.textContent = `Rain +${uiState.weatherBuffer}`;
+    } else {
+      bufferChip.hidden = true;
+    }
+
+    // Prep chip
+    if (uiState.prepDeadline && uiState.prepDeadline < uiState.leaveAt) {
+      prepChip.hidden = false;
+      prepChip.textContent = `Shoes ${uiState.prepDeadline}`;
+    } else {
+      prepChip.hidden = true;
+    }
+
+    // Show meta row only if any conditional chip is visible or user is behind
+    const showMeta = behind > 0 || !bufferChip.hidden || !prepChip.hidden || true; // keep countdown visible
+    meta.hidden = !showMeta;
+  }
+
+  // ---- Offline banner (attach where you render alerts) ----
+  function renderOfflineBanner(containerEl){
+    const exists = document.getElementById("offlineBanner");
+    if (!uiState.isOffline) { if (exists) exists.remove(); return; }
+    if (exists) return;
+    const ts = uiState.cachedWeatherAt ? new Date(uiState.cachedWeatherAt) : null;
+    const time = ts ? ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "unknown time";
+    const el = document.createElement("div");
+    el.id = "offlineBanner";
+    el.className = "banner";
+    el.textContent = `Offline — showing cached weather from ${time}`;
+    containerEl.prepend(el);
+  }
+
+  // ---- SW update toast hook (assumes you already detect updates) ----
+  function showUpdateToast(onConfirm){
+    const t = document.createElement("div");
+    t.className = "banner";
+    t.innerHTML = `New version ready. <button id="applyUpdate">Update</button>`;
+    document.body.appendChild(t);
+    document.getElementById("applyUpdate").onclick = onConfirm; // should call skipWaiting + reload
+  }
+
+  // ---- Initial paint + tick ----
+  renderHero();
+  renderOfflineBanner(document.body);
+  setInterval(()=> {
+    countdownChip.textContent = `${minutesUntil(uiState.leaveAt)}m left`;
+  }, 30_000);
+
+  window.addEventListener("online", () => { uiState.isOffline = false; renderOfflineBanner(document.body); });
+  window.addEventListener("offline", () => { uiState.isOffline = true; renderOfflineBanner(document.body); });
 
   // ---------- Ticking ----------
   function startMinuteAlignedTick(){
