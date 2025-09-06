@@ -749,7 +749,11 @@ main,
         equipped.delete(slotType);
       }
       const rect = slotRect(slotType);
-      const center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+      const stageRect = stage.getBoundingClientRect();
+      const center = {
+        x: rect.left + rect.width/2 - stageRect.left,
+        y: rect.top + rect.height/2 - stageRect.top
+      };
       const proxy = itemBtn.querySelector('svg').cloneNode(true);
       const holder = document.createElement('div');
       holder.className = 'snap';
