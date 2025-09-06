@@ -1,8 +1,9 @@
 /* sw.js */
-const SHELL = 'dc-shell-v17';
+const SHELL = 'dc-shell-v18';
 const DATA  = 'dc-data-v1';
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(SHELL).then(c => c.addAll(['/', '/index.html']))
   );
