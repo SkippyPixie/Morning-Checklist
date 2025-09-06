@@ -1,11 +1,11 @@
 /* sw.js */
-const SHELL = 'dc-shell-v17';
+const SHELL = 'dc-shell-v18';
 const DATA  = 'dc-data-v1';
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(SHELL).then(c => c.addAll(['/', '/index.html']))
-  );
+    e.waitUntil(
+      caches.open(SHELL).then(c => c.addAll(['/', '/index.html', '/styles.css']))
+    );
 });
 
 self.addEventListener('activate', (e) => {
