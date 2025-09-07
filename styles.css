@@ -55,6 +55,30 @@ body{ font-family:'Inter', ui-sans-serif; }
 .link-action{ font-size:.875rem; text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
 .link-action:hover{ opacity:1; text-decoration:none; }
 
+/* Luna style guide utilities */
+/* Typography */
+.text-normal {
+  @apply text-gray-700 normal-case;
+}
+
+/* Container */
+.container {
+  @apply max-w-4xl mx-auto text-center py-20 px-4;
+}
+
+/* Card surface */
+.card {
+  @apply bg-white shadow-sm rounded-xl p-6 mb-6;
+}
+
+/* Button styles */
+.button {
+  @apply border border-gray-300 rounded-xl px-6 py-3 hover:bg-gray-100;
+}
+.button-accent {
+  @apply border border-indigo-500 text-indigo-500 hover:bg-indigo-50;
+}
+
 /* Inputs */
 .input-group{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:var(--space-2); }
 .field{ display:block; }
