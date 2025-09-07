@@ -407,7 +407,7 @@ main,
 .leave-form input[type="number"]{
   height:40px; border-radius:12px; text-align:center; width:100%;
 }
-.leave-buffers{ position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); }
+
 
 
   </style>
@@ -490,7 +490,11 @@ main,
           <input id="schoolOut" type="checkbox" />
           <label for="schoolOut">School's Out (PA day)</label>
         </div>
-        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
+        <details class="hint leave-buffers">
+          <summary>Timing buffers</summary>
+          Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.
+        </details>
+        <div class="hint" id="leaveInstr" aria-live="polite"></div>
       </section>
 
         <section class="card backpacks" aria-label="Backpacks" id="backpacks">
@@ -653,6 +657,7 @@ main,
     todayDate:document.getElementById('todayDate'),
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
+    leaveInstr:document.getElementById('leaveInstr'),
     plus5:document.getElementById('plus5'),
     wx:{ loc:document.getElementById('wxLocation'), tempVal:document.getElementById('wxTempValue'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), feels:document.getElementById('wxFeels'), wind:document.getElementById('wxWind'), humidity:document.getElementById('wxHumidity'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing'), updated:document.getElementById('wxUpdated') },
     wxUseLoc:document.getElementById('wxUseLoc'),
@@ -831,7 +836,12 @@ main,
     const buf=bufferByWeather(); const extra=currentFlags().extraBuffer|0;
     const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
-    el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
+    const leaveStr12=hmToStr12(leave); const shoesStr12=hmToStr12(shoes);
+    el.tLeave.textContent=leaveStr12; el.tShoes.textContent=shoesStr12;
+    if(el.leaveInstr){
+      const leaveStr=leaveStr12.slice(0,-3); const shoesStr=shoesStr12.slice(0,-3);
+      el.leaveInstr.textContent=`Start shoes by ${shoesStr} to leave ${leaveStr}`;
+    }
     const shoesEl=document.getElementById('shoesTime');
     const leaveEl=document.getElementById('leaveTime');
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
