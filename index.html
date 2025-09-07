@@ -194,12 +194,13 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 .weather-hero{ display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:12px; }
 .weather-hero .temp{ font-size:var(--fs-xl); font-weight:800; letter-spacing:-.015em; }
 .weather-hero .desc{ color:var(--muted); }
-.weather-mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
-.weather-mini .cell{
+.weather-mini{ display:flex; gap:8px; }
+.weather-mini .chip{
+  height:30px; padding:0 12px;
   background:var(--pill); border:1px solid var(--border);
-  border-radius:12px; padding:10px 8px; text-align:center;
+  border-radius:999px; display:inline-flex; align-items:center;
+  white-space:nowrap; font-variant-numeric:tabular-nums;
 }
-.weather-mini .t{ font-weight:600; }
 .weather .foot{ margin-top:10px; color:var(--muted); font-size:var(--fs-xs); }
 
 /* windy hint via class on .weather */
@@ -527,6 +528,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   const WX_ICON=[[/thunder|storm/i,"⛈️"],[/snow|sleet|flurr/i,"❄️"],[/rain|shower/i,"🌧️"],[/hail/i,"🌨️"],[/fog|mist|haze/i,"🌫️"],[/overcast|cloudy/i,"☁️"],[/partly|mostly\s*clear|few clouds/i,"⛅️"],[/clear|sunny/i,"☀️"]];
   function pickWxIcon(desc){ for(const [re,icon] of WX_ICON){ if(re.test(desc)) return icon; } return "🌡️"; }
 
+  function formatTempC(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}\u00a0°C`; }
+  function ariaTemp(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}`; }
+
   function renderWeather(){
     const W=S.wx;
     el.wx.temp.textContent=(W.now??'--')+'°';
@@ -540,10 +544,15 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     el.wx.hours.innerHTML='';
     const frag=document.createDocumentFragment();
     picks.forEach(h=>{
-      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null,pop:null,code:null};
-      const cell=document.createElement('div'); cell.className='cell';
-      cell.innerHTML=`<div class="t">${hrLabel12(h)}</div><div class="v">${wxIcon(itm.code)} ${itm.temp??'--'}°</div><div class="t">${(itm.pop??'--')}%</div>`;
-      frag.appendChild(cell);
+      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null};
+      const time=hrLabel12(h);
+      const temp=itm.temp!=null?formatTempC(itm.temp):`--\u00a0°C`;
+      const chip=document.createElement('div'); chip.className='chip';
+      chip.textContent=`${time} \u00b7 ${temp}`;
+      const timeLbl=time.replace('\u00a0',' ');
+      if(itm.temp!=null){ chip.setAttribute('aria-label',`${timeLbl}, ${ariaTemp(itm.temp)} degrees Celsius`); }
+      else{ chip.setAttribute('aria-label',timeLbl); }
+      frag.appendChild(chip);
     });
     el.wx.hours.appendChild(frag);
     el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
@@ -815,7 +824,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function hmToStr12(hm){ const am=hm.h<12; let h=hm.h%12; if(h===0) h=12; const m=String(hm.m).padStart(2,'0'); return `${h}:${m} ${am?'AM':'PM'}` }
   function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
   function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
-  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
+  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh}\u00a0${am?'am':'pm'}` }
   function taskStartMinutes(L,SH,t){
     if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
     if (t.abs)  return hmToMinutes(parseHM(t.abs));
