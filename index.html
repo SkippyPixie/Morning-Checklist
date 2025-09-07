@@ -112,6 +112,7 @@ body{
   display:block;
   margin-bottom:0;
 }
+.wx-icon.spin{ animation:spin .6s linear; }
 
 .wx-cond{font-size:18px; color:var(--ink)}
 
@@ -139,7 +140,7 @@ body{
   white-space:nowrap; font-variant-numeric:tabular-nums;
 }
 
-.wx-updated{margin:10px 0 0; font-size:12px; color:rgba(0,0,0,.55)}
+.wx-updated{margin:10px 0 0; font-size:12px; color:rgba(0,0,0,.55); opacity:0; transition:opacity .4s}
 
 @media (max-width: 980px){
   .wx-grid{grid-template-columns:1fr}
@@ -238,6 +239,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   border:1px solid color-mix(in oklab, var(--border), #000 4%);
   border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
 }
+.status-banner.pulse{ animation:pulse .6s ease; }
 .status-banner .left{ display:flex; align-items:center; gap:10px; }
 .status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
 .status-banner .times{ font-weight:600; }
@@ -282,7 +284,7 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
   background-size:2px 14px; border-radius:2px;
 }
-.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; }
+.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; transition:opacity .2s ease; }
 .time-node{
   width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
   background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
@@ -302,7 +304,9 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .cardlet{
   border:1px solid var(--border); border-radius:14px; padding:12px;
   background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
+  transition:transform .2s ease;
 }
+.step.done .cardlet{ transform:translateX(-6px); }
 .cardlet .label{ font-weight:600; white-space:normal; }
 .cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
 .cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
@@ -327,7 +331,8 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .pack-chip[aria-pressed="true"]{ opacity:.55; }
 
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion: reduce){ .step.due .cardlet{ animation:none; } }
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .step.due .cardlet, .status-banner.pulse, .wx-icon.spin{ animation:none; } }
 
 /* === Motion ============================================================= */
 @media (prefers-reduced-motion:no-preference){
@@ -356,7 +361,7 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   --radius:12px;
   --accent:#EAE6FF;
   --accent-border:#C8BFFF;
-  --done-fg:0.55;
+  --done-fg:0.5;
 }
 
 /* two-column layout: left content + right timeline */
@@ -730,6 +735,7 @@ main,
   if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
   const statusEl = document.querySelector('.status-banner');
   statusEl?.classList.add('is-sticky');
+  let lastPaceState;
 
   recomputeTimes();
   renderTimeline();
@@ -747,6 +753,10 @@ main,
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
 
   async function fetchWeather(){
+    const icon=el.wx.icon, updated=el.wx.updated;
+    updated.style.opacity=0;
+    icon.classList.add('spin');
+    icon.addEventListener('animationend',()=>icon.classList.remove('spin'),{once:true});
     document.querySelector('.weather-hero')?.classList.add('loading');
     const {lat,lon}=S.settings; const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
     const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode,relativehumidity_2m,apparent_temperature',daily:'temperature_2m_max,temperature_2m_min'});
@@ -772,7 +782,9 @@ main,
       save(); el.wx.cached.hidden=true
     } else { el.wx.cached.hidden=false }
     document.querySelector('.weather-hero')?.classList.remove('loading');
-    renderWeather(); recomputeTimes()
+    renderWeather();
+    requestAnimationFrame(()=>updated.style.opacity=1);
+    recomputeTimes()
   }
 
   function sliceHours(h){
@@ -855,6 +867,11 @@ main,
     if(label.includes('late')) state='late';
     else if(label.includes('tight')) state='tight';
     banner.classList.add(state);
+    if(lastPaceState!=null && lastPaceState!==state){
+      banner.classList.add('pulse');
+      banner.addEventListener('animationend',()=>banner.classList.remove('pulse'),{once:true});
+    }
+    lastPaceState=state;
     const dot=banner.querySelector('.status-dot');
     if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
   }
