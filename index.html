@@ -600,17 +600,17 @@ main,
       peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
     },
     todos:[
-      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
+      {id:'t1', text:'Eat breakfast (everyone)', done:false, abs:'06:45'},
       {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
-      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
-      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
-      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
-      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
-      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
-      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
+      {id:'t3', text:'Brush teeth (everyone)', done:false, abs:'07:15'},
+      {id:'t4', text:'Ask Siri for today’s weather (Peregrine)', done:false, abs:'07:20'},
+      {id:'t5', text:'Get dressed (everyone)', done:false, abs:'07:25'},
+      {id:'t6', text:'Brush hair (Peregrine)', done:false, abs:'07:35'},
+      {id:'t7', text:'Brush hair (Onyx)', done:false, abs:'07:45'},
+      {id:'t8', text:'Take medication 0.25 mg (Peregrine)', done:false, abs:'08:15', special:'med'},
       {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
-      {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
-      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
+      {id:'t10', text:'Put on shoes', done:false, rel:'shoes', offset:0},
+      {id:'t11', text:'Use bathroom (right before leave)', done:false, rel:'leave', offset:-3},
       {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
     ],
     dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
@@ -1080,7 +1080,10 @@ main,
   }
 
   function addTaskInteractive(){
-    const text=prompt('Task text','Brush teeth'); if(!text) return;
+    const text=prompt('Task text (start with a verb; avoid em-dashes, e.g., "Brush teeth (Peregrine)")','Brush teeth');
+    if(!text) return;
+    if(/[—–]/.test(text)) return alert('Please avoid dashes; try parentheses or commas instead.');
+    if(!/^[A-Za-z]/.test(text.trim())) return alert('Please start with a verb.');
     const when=prompt('When? Examples: "07:05", "leave -10", "shoes +0", or "range 06:45-07:15"','leave -10'); if(!when) return;
     const w=when.trim().toLowerCase(); let task=null;
     if (w.startsWith('range ')){ const r=w.replace(/^range\s+/,'').replace('–','-'); if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) return alert('Use HH:MM-HH:MM'); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,range:r}; }
