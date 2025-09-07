@@ -232,22 +232,43 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 /* === Status banner ====================================================== */
 .status-banner{
   position:sticky; top:8px; z-index:5;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
   backdrop-filter:saturate(1.1) blur(8px);
   background:color-mix(in oklab, var(--card), #ffffff 30%);
   border:1px solid color-mix(in oklab, var(--border), #000 4%);
   border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
 }
-.status-banner .left{ display:flex; align-items:center; gap:10px; }
-.status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
-.status-banner .times{ font-weight:600; }
+.status-banner .times{
+  display:flex; flex-direction:column; flex:1; gap:4px;
+  font-weight:600;
+}
+.status-banner .leave-line{
+  display:flex; align-items:center; gap:8px;
+  font-size:1.5rem; font-weight:700;
+}
+.status-banner .leave-line .pace-text{
+  font-size:.75rem; font-weight:600;
+}
+.status-banner .sub-line{
+  font-size:.875rem; color:var(--muted);
+}
 .status-banner .btn-plus{
   min-width:36px; height:36px; border-radius:12px;
   background:var(--pill); border:1px solid var(--border); font-weight:700;
+  align-self:flex-start;
 }
-.status-banner.late  .status-dot{ background:#E46464; }
-.status-banner.tight .status-dot{ background:#E6A64E; }
-.status-banner.ok    .status-dot{ background:#7FB086; }
+.status-banner.ok    .pace-text{
+  background: color-mix(in oklab, var(--sage), #fff 80%);
+  border-color: color-mix(in oklab, var(--sage), #000 14%);
+}
+.status-banner.tight .pace-text{
+  background: color-mix(in oklab, #E6A64E, #fff 85%);
+  border-color: color-mix(in oklab, #E6A64E, #000 14%);
+}
+.status-banner.late  .pace-text{
+  background: color-mix(in oklab, #E46464, #fff 85%);
+  border-color: color-mix(in oklab, #E46464, #000 14%);
+}
 .status-banner.tight .btn-plus,
 .status-banner.late  .btn-plus{
   background: color-mix(in oklab, var(--sage), #fff 78%);
@@ -426,12 +447,12 @@ main,
     <main class="app-grid">
       <div class="left-stack">
         <section class="card status-banner ok" role="region" aria-label="Status">
-          <div class="left">
-            <span class="status-dot" role="img" aria-label="On pace"></span>
-            <span class="pace-text">On pace</span>
-          </div>
           <div class="times">
-            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
+            <div class="leave-line">
+              <span>Leave <span id="leaveTime">8:30 AM</span></span>
+              <span class="chip pace-text">On-pace</span>
+            </div>
+            <div class="sub-line">Shoes <span id="shoesTime">8:25 AM</span></div>
           </div>
           <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
         </section>
@@ -844,19 +865,15 @@ main,
     const now=new Date();
     const leaveHM=parseHM24(el.tLeave.textContent);
     const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
-    let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
+    let status='On-pace', state='ok';
+    if(minsToLeave<0){ status='Late'; state='late'; }
+    else if(minsToLeave<=10){ status='At-risk'; state='tight'; }
     const banner=document.querySelector('.status-banner');
     if(!banner) return;
     const paceText=banner.querySelector('.pace-text');
     if(paceText) paceText.textContent=status;
-    const label=status.toLowerCase();
     banner.classList.remove('late','tight','ok');
-    let state='ok';
-    if(label.includes('late')) state='late';
-    else if(label.includes('tight')) state='tight';
     banner.classList.add(state);
-    const dot=banner.querySelector('.status-dot');
-    if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
   }
 
   // ---------- Timeline + Med states ----------
