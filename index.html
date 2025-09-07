@@ -127,16 +127,17 @@ body{
 .wx-stats dt{font-size:12px; color:rgba(0,0,0,.55)}
 .wx-stats dd{font-size:16px; color:var(--ink); margin:0}
 
-.wx-hours{
+.weather-mini{
   margin-top:16px;
-  display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
+  display:flex; gap:8px;
   font-size:14px; color:var(--ink)
 }
-.wx-hours > div{
-  background:#fff; border:1px solid var(--line); border-radius:14px;
-  padding:8px 10px; text-align:center
+.weather-mini .chip{
+  height:30px; padding:0 12px;
+  background:var(--pill); border:1px solid var(--border);
+  border-radius:999px; display:inline-flex; align-items:center;
+  white-space:nowrap; font-variant-numeric:tabular-nums;
 }
-.wx-dot{opacity:.35}
 
 .wx-updated{margin:10px 0 0; font-size:12px; color:rgba(0,0,0,.55)}
 
@@ -460,7 +461,7 @@ main,
               </dl>
             </aside>
           </div>
-          <div class="wx-hours" aria-label="Hourly" id="wxHours"></div>
+          <div class="weather-mini" aria-label="Hourly" id="wxHours"></div>
           <p class="wx-updated" id="wxUpdated">Updated --:--</p>
           <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
           <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
@@ -804,9 +805,14 @@ main,
     const frag=document.createDocumentFragment();
     picks.forEach(h=>{
       const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null};
-      const cell=document.createElement('div');
-      cell.innerHTML=`<time>${hrLabel12(h)}</time><span>${itm.temp??'--'}°</span><span class="wx-dot" aria-hidden="true">•</span>`;
-      frag.appendChild(cell);
+      const time=hrLabel12(h);
+      const temp=itm.temp!=null?formatTempC(itm.temp):`--\u00a0°C`;
+      const chip=document.createElement('div'); chip.className='chip';
+      chip.textContent=`${time} \u00b7 ${temp}`;
+      const timeLbl=time.replace('\u00a0',' ');
+      if(itm.temp!=null){ chip.setAttribute('aria-label',`${timeLbl}, ${ariaTemp(itm.temp)} degrees Celsius`); }
+      else{ chip.setAttribute('aria-label',timeLbl); }
+      frag.appendChild(chip);
     });
     el.wx.hours.appendChild(frag);
     el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
@@ -1085,7 +1091,9 @@ main,
   function hmToStr12(hm){ const am=hm.h<12; let h=hm.h%12; if(h===0) h=12; const m=String(hm.m).padStart(2,'0'); return `${h}:${m} ${am?'AM':'PM'}` }
   function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
   function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
-  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
+  function formatTempC(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}\u00a0°C`; }
+  function ariaTemp(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}`; }
+  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh}\u00a0${am?'am':'pm'}` }
   function taskStartMinutes(L,SH,t){
     if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
     if (t.abs)  return hmToMinutes(parseHM(t.abs));
