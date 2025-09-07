@@ -59,22 +59,56 @@ body{
   }
 }
 
-/* ---- Common UI ---- */
-.tag{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-weight:600; border:1px solid var(--border); background:#FFFDF9; color:var(--sepia); cursor:pointer; }
-.tag[aria-pressed="true"]{ background:var(--pill); }
-.tag-sage{ background:var(--pill); color:var(--sepia); }
+/* ---- Components ---- */
+.btn{
+  font-weight:700;
+  border-radius:999px;
+  padding:8px 14px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--sepia);
+  cursor:pointer;
+}
+.btn:active{ transform:translateY(1px); }
+.btn--filled{
+  background:var(--sage);
+  border-color:var(--sage);
+  color:#fff;
+}
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-weight:600;
+  font-size:15px;
+  background:#FBF6F1;
+  border:1px solid var(--border);
+  color:var(--sepia);
+  cursor:pointer;
+}
+.chip--state,
+.chip[aria-pressed="true"]{
+  background:var(--pill);
+}
+
 .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
-.tag{ background:#FBF6F1; border-color:#EADFD3; }
-.tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
 .card-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
 .card-title{ font-weight:700; font-size:22px; }
-.btn{ font-weight:700; border-radius:999px; padding:8px 14px; border:1px solid transparent; background:transparent; color:var(--sepia); cursor:pointer; }
-.btn:active{ transform:translateY(1px) }
-.btn-primary{ background:var(--sage); color:#fff; }
-.btn-ghost{ background:transparent; border:1px solid var(--border); }
-.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .hint{ color:var(--muted); font-size:15px; margin-top:8px; }
 :focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px; }
+
+/* Segmented control wrapper */
+.segmented{
+  display:inline-flex;
+  gap:4px;
+  padding:4px;
+  background:var(--pill);
+  border-radius:999px;
+}
 
 /* ---- Weather ---- */
 .weather-hero{
@@ -117,11 +151,11 @@ body{
 
 .wx-aside{display:flex; flex-direction:column; gap:12px}
 .wx-chips{display:flex; flex-wrap:wrap; gap:8px}
-.chip{
+.wx-chips .chip{
   background:#fff; border:1px solid var(--line); border-radius:999px;
   padding:6px 12px; font-size:14px; color:var(--ink)
 }
-.chip--ghost{background:transparent}
+.wx-chips .chip--ghost{background:transparent}
 
 .wx-stats{display:grid; grid-template-columns:repeat(2, minmax(120px,1fr)); gap:8px 16px}
 .wx-stats dt{font-size:12px; color:rgba(0,0,0,.55)}
@@ -217,17 +251,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 .stack-8 > * + *{ margin-top:8px; }
 .stack-16 > * + *{ margin-top:16px; }
 .section-divider{ height:1px; background:color-mix(in oklab, var(--border), #000 5%); margin:12px 0; }
-
-/* === Chips / Tags unified ============================================== */
-.chip, .tag{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:6px 12px; border-radius:999px; font-size:var(--fs-xs);
-  background:var(--pill); border:1px solid var(--border); color:var(--sepia);
-}
-[aria-pressed="true"].chip{
-  background: color-mix(in oklab, var(--sage), #fff 85%);
-  border-color: color-mix(in oklab, var(--sage), #000 14%);
-}
 
 /* === Status banner ====================================================== */
 .status-banner{
@@ -419,7 +442,7 @@ main,
       <div class="today-tags">
         <!-- Only School remains; pressed=true means "School day" -->
         <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
-        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+        <button class="btn" id="quickAdd" aria-label="Quick add event">+ Event</button>
       </div>
     </section>
 
@@ -470,7 +493,7 @@ main,
         <section class="card leave-plan" aria-label="Leave plan">
         <header class="card-head">
           <div class="card-title">Leave plan</div>
-          <div class="tag tag-sage" id="schoolState">School day</div>
+          <div class="chip chip--state" id="schoolState">School day</div>
         </header>
         <div class="leave-form">
           <div class="field">
@@ -498,7 +521,7 @@ main,
         <div class="backpacks-grid" id="packs"></div>
         <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
           <span>Tap items to toggle; changes persist.</span>
-          <button class="btn btn-ghost" id="resetPacks">Reset checks</button>
+          <button class="btn" id="resetPacks">Reset checks</button>
         </div>
       </section>
 
@@ -507,22 +530,22 @@ main,
         <div class="schedule-actions">
           <div>
             <div><b>Onyx</b></div>
-            <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="onyxView">View</button>
-            <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
+            <button class="btn" id="onyxImport">Import schedule photo</button>
+            <button class="btn" id="onyxView">View</button>
+            <button class="btn" id="onyxAddEvent">Add event(s)</button>
           </div>
           <div>
             <div><b>Peregrine</b></div>
-            <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="pereView">View</button>
-            <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
+            <button class="btn" id="pereImport">Import schedule photo</button>
+            <button class="btn" id="pereView">View</button>
+            <button class="btn" id="pereAddEvent">Add event(s)</button>
           </div>
         </div>
         <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
       </section>
 
         <section class="card utilities" aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
-          <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
+          <button class="btn btn--filled" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
           <div class="hint">Offline-first; caches shell & last weather.</div>
         </section>
       </div>
@@ -532,8 +555,8 @@ main,
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
             <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn btn-ghost" id="addTask">+ Task</button>
-              <button class="btn btn-ghost" id="toggleDense">Dense</button>
+              <button class="btn" id="addTask">+ Task</button>
+              <button class="btn" id="toggleDense">Dense</button>
             </div>
           </header>
           <div id="timeline"></div>
@@ -546,7 +569,7 @@ main,
   <dialog id="imgModal" class="modal">
     <header>
       <div>Schedule</div>
-      <button class="btn btn-ghost" id="modalClose">Close</button>
+      <button class="btn" id="modalClose">Close</button>
     </header>
     <div class="content"><img id="modalImg" alt="Uploaded schedule image" /></div>
   </dialog>
@@ -891,7 +914,7 @@ main,
         const info=document.createElement('div'); info.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         card.append(bottle,info);
         const actions=document.createElement('div'); actions.className='actions';
-        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
+        const del=document.createElement('button'); del.className='btn btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
         actions.appendChild(del); card.appendChild(actions);
         card.onclick=()=>{
@@ -905,7 +928,7 @@ main,
       } else {
         card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         const actions=document.createElement('div'); actions.className='actions';
-        const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
+        const del=document.createElement('button'); del.className='btn btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
         actions.appendChild(del); card.appendChild(actions);
         card.onclick=()=>{
