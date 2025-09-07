@@ -169,7 +169,8 @@ dialog.modal{
 .modal img{ max-width:100%; height:auto; display:block; border-radius:12px; border:1px solid var(--border); }
 
 /* ---- Toast ---- */
-.toast{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; z-index:9999; opacity:.95; }
+.toast{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; z-index:9999; opacity:.95; display:flex; align-items:center; gap:8px; }
+.toast button{ background:transparent; border:1px solid #fff; color:#fff; padding:2px 8px; border-radius:8px; font-size:13px; cursor:pointer; }
 
 /* Motion safe */
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{ transition:none !important; animation:none !important; } }
@@ -231,26 +232,25 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 /* === Status banner ====================================================== */
 .status-banner{
   position:sticky; top:8px; z-index:5;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  display:flex; flex-direction:column; align-items:flex-start; gap:8px;
   backdrop-filter:saturate(1.1) blur(8px);
   background:color-mix(in oklab, var(--card), #ffffff 30%);
   border:1px solid color-mix(in oklab, var(--border), #000 4%);
-  border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
+  border-radius:24px; padding:14px; box-shadow:var(--shadow-1);
 }
-.status-banner .left{ display:flex; align-items:center; gap:10px; }
-.status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
-.status-banner .times{ font-weight:600; }
-.status-banner .btn-plus{
-  min-width:36px; height:36px; border-radius:12px;
-  background:var(--pill); border:1px solid var(--border); font-weight:700;
-}
-.status-banner.late  .status-dot{ background:#E46464; }
-.status-banner.tight .status-dot{ background:#E6A64E; }
-.status-banner.ok    .status-dot{ background:#7FB086; }
-.status-banner.tight .btn-plus,
-.status-banner.late  .btn-plus{
-  background: color-mix(in oklab, var(--sage), #fff 78%);
-}
+.status-banner .hero-line{ font-size:28px; font-weight:700; }
+.status-banner .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip.late{ background:color-mix(in oklab, #E46464, #fff 80%); border-color:color-mix(in oklab, #E46464, #000 20%); }
+.chip.behind{ background:color-mix(in oklab, var(--mauve), #fff 80%); border-color:color-mix(in oklab, var(--mauve), #000 20%); }
+
+/* Skeletons */
+.skeleton{ display:inline-block; background:color-mix(in oklab, var(--border), #fff 50%); color:transparent; border-radius:4px; min-width:1ch; }
+@keyframes pulse{ 0%{opacity:.5;}50%{opacity:.9;}100%{opacity:.5;} }
+.skeleton{ animation:pulse 1.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce){ .skeleton{ animation:none; } }
+
+/* Offline banner */
+.offline-banner{ position:fixed; top:0; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:4px 12px; border-radius:0 0 8px 8px; font-size:var(--fs-xs); z-index:9999; }
 
 /* windy hint via class on .weather-hero */
 .weather-hero.windy .wx-chips .chip{
@@ -412,6 +412,7 @@ main,
   </style>
 </head>
 <body>
+  <div id="offlineBanner" class="offline-banner" hidden></div>
   <div class="app">
     <section class="today-strip" aria-label="Today">
       <div class="today-date" id="todayDate">Today</div>
@@ -424,15 +425,10 @@ main,
 
     <main class="app-grid">
       <div class="left-stack">
-        <section class="card status-banner ok" role="region" aria-label="Status">
-          <div class="left">
-            <span class="status-dot" role="img" aria-label="On pace"></span>
-            <span class="pace-text">On pace</span>
-          </div>
-          <div class="times">
-            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
-          </div>
-          <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
+        <section class="card status-banner" role="region" aria-label="Departure status">
+          <div class="hero-line" id="heroLine" aria-live="polite">Leave by <span id="leaveTime">8:30 AM</span></div>
+          <div class="chips" id="contextChips" hidden></div>
+          <span id="shoesTime" hidden></span>
         </section>
 
         <section class="weather-hero" aria-label="Weather" id="weatherCard">
@@ -440,11 +436,11 @@ main,
             <div class="wx-lead">
               <div class="wx-lockup">
                 <div class="wx-temp" aria-label="Temperature">
-                  <span class="wx-temp-value" id="wxTempValue">--</span><span class="wx-temp-unit">°</span>
+                  <span class="wx-temp-value skeleton" id="wxTempValue"></span><span class="wx-temp-unit">°</span>
                 </div>
                 <img class="wx-icon" id="wx-icon" src="" alt="Condition icon" />
               </div>
-              <div class="wx-cond" aria-label="Condition" id="wx-desc">—</div>
+              <div class="wx-cond skeleton" aria-label="Condition" id="wx-desc"></div>
             </div>
             <aside class="wx-aside">
               <div class="wx-chips">
@@ -453,10 +449,10 @@ main,
                 <button class="chip chip--ghost" id="wxUseLoc">Use location</button>
               </div>
               <dl class="wx-stats">
-                <div><dt>Feels</dt><dd id="wxFeels">--°</dd></div>
-                <div><dt>Wind</dt><dd id="wxWind">-- km/h</dd></div>
-                <div><dt>Humidity</dt><dd id="wxHumidity">--%</dd></div>
-                <div><dt>Rain</dt><dd id="wxRain">--%</dd></div>
+                <div><dt>Feels</dt><dd class="skeleton" id="wxFeels"></dd></div>
+                <div><dt>Wind</dt><dd class="skeleton" id="wxWind"></dd></div>
+                <div><dt>Humidity</dt><dd class="skeleton" id="wxHumidity"></dd></div>
+                <div><dt>Rain</dt><dd class="skeleton" id="wxRain"></dd></div>
               </dl>
             </aside>
           </div>
@@ -481,15 +477,15 @@ main,
             <input id="commute" type="number" min="0" step="1" value="15" />
           </div>
           <div class="field">
-            <label for="shoesLead" class="label">Shoes lead (min)</label>
+            <label for="shoesLead" class="label">Lead time (min)</label>
             <input id="shoesLead" type="number" min="0" step="1" value="5" />
           </div>
         </div>
         <div class="switch" style="margin-top:10px">
           <input id="schoolOut" type="checkbox" />
-          <label for="schoolOut">School's Out (PA day)</label>
+          <label for="schoolOut">No school today (PA day)</label>
         </div>
-        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
+        <div class="hint leave-buffers">Rain adds 10, snow adds 15 (snow overrides rain). No extra time on days off.</div>
       </section>
 
         <section class="card backpacks" aria-label="Backpacks" id="backpacks">
@@ -558,7 +554,18 @@ main,
     return 'serviceWorker' in navigator && isTop && isSecure;
   }
   if (canUseSW()) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/sw.js').then(reg=>{
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange',()=>{
+          if(nw.state==='installed' && navigator.serviceWorker.controller){
+            toast('Update available',{label:'Update', onClick:()=>nw.postMessage('SKIP_WAITING')});
+          }
+        });
+      });
+    }).catch(()=>{});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
   }
 
   // ---------- Constants & helpers ----------
@@ -652,7 +659,9 @@ main,
     todayDate:document.getElementById('todayDate'),
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
-    plus5:document.getElementById('plus5'),
+    heroLine:document.getElementById('heroLine'),
+    contextChips:document.getElementById('contextChips'),
+    offlineBanner:document.getElementById('offlineBanner'),
     wx:{ loc:document.getElementById('wxLocation'), tempVal:document.getElementById('wxTempValue'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), feels:document.getElementById('wxFeels'), wind:document.getElementById('wxWind'), humidity:document.getElementById('wxHumidity'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing'), updated:document.getElementById('wxUpdated') },
     wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
@@ -692,7 +701,6 @@ main,
   el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
   el.schoolOut.checked=!currentFlags().schoolDay; updateSchoolVisual();
 
-  el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
   el.arrival.onchange=()=>{S.settings.arrival=el.arrival.value; save(); recomputeTimes()};
   el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
@@ -740,7 +748,7 @@ main,
   // ---------- Day flags & rollover ----------
   function currentFlags(){ const d=todayLocalISO(); if(!S.dayFlags[d]) S.dayFlags[d]={schoolDay:true,extraBuffer:0}; return S.dayFlags[d] }
   function dailyRollover(){ const d=todayLocalISO(); if(S.meta.lastOpen!==d){ S.todos.forEach(t=>t.done=false); ['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); S.dayFlags[d]={schoolDay:true,extraBuffer:0}; S.meta.lastOpen=d; save() }}
-  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':"School's Out"; }
+  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':'No school today'; }
 
   // ---------- Weather ----------
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
@@ -771,7 +779,7 @@ main,
       save(); el.wx.cached.hidden=true
     } else { el.wx.cached.hidden=false }
     document.querySelector('.weather-hero')?.classList.remove('loading');
-    renderWeather(); recomputeTimes()
+    renderWeather(); recomputeTimes(); updateOfflineBanner();
   }
 
   function sliceHours(h){
@@ -790,14 +798,15 @@ main,
 
   function renderWeather(){
     const W=S.wx;
-    el.wx.tempVal.textContent=(W.now??'--');
-    el.wx.desc.textContent=W.desc||'—';
+    el.wx.tempVal.textContent=(W.now??''); el.wx.tempVal.classList.remove('skeleton');
+    el.wx.desc.textContent=W.desc||''; el.wx.desc.classList.remove('skeleton');
     el.wx.icon.src=emojiSrc(wxIcon(W.code));
     el.wx.icon.alt=W.desc||'';
-    el.wx.feels.textContent=(W.feels??'--')+'°';
-    el.wx.wind.textContent=(W.wind??'--')+' km/h';
-    el.wx.humidity.textContent=(W.humidity??'--')+'%';
-    el.wx.rain.textContent=(W.rain??'--')+'%';
+    el.wx.feels.textContent=(W.feels??'')+'°';
+    el.wx.wind.textContent=(W.wind??'')+' km/h';
+    el.wx.humidity.textContent=(W.humidity??'')+'%';
+    el.wx.rain.textContent=(W.rain??'')+'%';
+    [el.wx.feels,el.wx.wind,el.wx.humidity,el.wx.rain].forEach(elm=>elm.classList.remove('skeleton'));
     el.wx.loc.textContent=S.settings.place||'—';
     const picks=[7,10,13,16,19];
     el.wx.hours.innerHTML='';
@@ -826,31 +835,42 @@ main,
     const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
     el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
-    const shoesEl=document.getElementById('shoesTime');
     const leaveEl=document.getElementById('leaveTime');
-    [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
-    if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
-    if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
-    updatePace(); renderTimeline(leave,shoes); updateMedState();
+    if(leaveEl) leaveEl.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    renderContextChips(); renderTimeline(leave,shoes); updateMedState();
   }
 
-  function updatePace(){
+  function makeChip(text, cls){ const c=document.createElement('span'); c.className='chip'+(cls?' '+cls:''); c.textContent=text; return c; }
+
+  function renderContextChips(){
     const now=new Date();
     const leaveHM=parseHM24(el.tLeave.textContent);
-    const minsToLeave=hmToMinutes(leaveHM)-(now.getHours()*60+now.getMinutes());
-    let status='On pace'; if(minsToLeave<0) status='Late'; else if(minsToLeave<=10) status='Tight';
-    const banner=document.querySelector('.status-banner');
-    if(!banner) return;
-    const paceText=banner.querySelector('.pace-text');
-    if(paceText) paceText.textContent=status;
-    const label=status.toLowerCase();
-    banner.classList.remove('late','tight','ok');
-    let state='ok';
-    if(label.includes('late')) state='late';
-    else if(label.includes('tight')) state='tight';
-    banner.classList.add(state);
-    const dot=banner.querySelector('.status-dot');
-    if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
+    const leaveM=hmToMinutes(leaveHM);
+    const nowM=now.getHours()*60+now.getMinutes();
+    const behind=nowM-leaveM;
+    const chips=[];
+
+    if(behind<=0) chips.push(makeChip('On pace'));
+    else if(behind<10) chips.push(makeChip(`${behind}m behind`,'behind'));
+    else chips.push(makeChip('Late','late'));
+
+    const left=Math.max(0, leaveM-nowM);
+    chips.push(makeChip(`${left}m left`));
+
+    const buf=bufferByWeather();
+    if(buf>0){
+      const reason=isSnow(S.wx.code)?'Snow':'Rain';
+      chips.push(makeChip(`${reason} +${buf}`));
+    }
+
+    const shoesHM=parseHM24(el.tShoes.textContent);
+    if(hmToMinutes(shoesHM)<leaveM){
+      chips.push(makeChip(`Shoes ${hmToStr12(shoesHM)}`));
+    }
+
+    el.contextChips.innerHTML='';
+    chips.forEach(c=>el.contextChips.appendChild(c));
+    el.contextChips.hidden = chips.length===0;
   }
 
   // ---------- Timeline + Med states ----------
@@ -977,7 +997,7 @@ main,
       fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
-    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":"School day";
+    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"No school today":"School day";
   }
 
   // ---------- Rules -> chips ----------
@@ -1108,14 +1128,39 @@ main,
   }
 
   function exportJSON(){ const blob=new Blob([JSON.stringify({[KEY]:S},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='daily-command-'+todayLocalISO()+'.json'; a.click(); URL.revokeObjectURL(a.href) }
-  function toast(msg){ const t=document.createElement('div'); t.textContent=msg; t.className='toast'; document.body.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },1400) }
+  function toast(msg, action){
+    const t=document.createElement('div');
+    t.className='toast';
+    t.textContent=msg;
+    if(action){
+      const b=document.createElement('button');
+      b.textContent=action.label;
+      b.onclick=()=>{ action.onClick(); t.remove(); };
+      t.appendChild(b);
+    }
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220) },4000);
+  }
+
+  // ---- Offline banner ----
+  function updateOfflineBanner(){
+    if(navigator.onLine){ el.offlineBanner.hidden=true; }
+    else{
+      const ts=el.wx.updated.textContent.replace('Updated ','');
+      el.offlineBanner.textContent=`Offline — showing cached weather from ${ts}`;
+      el.offlineBanner.hidden=false;
+    }
+  }
+  window.addEventListener('online',updateOfflineBanner);
+  window.addEventListener('offline',updateOfflineBanner);
+  updateOfflineBanner();
 
   // ---------- Ticking ----------
   function startMinuteAlignedTick(){
-    const tick=()=>{ updatePace(); refreshTimelineStates(); updateMedState(); renderRuleChips(); };
+    const tick=()=>{ renderContextChips(); refreshTimelineStates(); updateMedState(); renderRuleChips(); };
     tick();
-    const delay=60000-(Date.now()%60000);
-    setTimeout(()=>{ tick(); setInterval(tick,60000); }, delay);
+    const delay=30000-(Date.now()%30000);
+    setTimeout(()=>{ tick(); setInterval(tick,30000); }, delay);
   }
   </script>
 </body>
