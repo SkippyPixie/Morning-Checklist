@@ -160,7 +160,12 @@ body{
 .subtle{ color:var(--muted); }
 
 /* ---- Schedules & dialog ---- */
-.schedule-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.schedule-actions{ display:flex; flex-direction:column; gap:8px; }
+.schedule-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.schedule-row .actions{ display:flex; gap:4px; }
+
+/* ---- Settings popover ---- */
+.help-popover{ position:absolute; top:60px; right:16px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-2); z-index:1000; width:220px; }
 dialog.modal{
   border:none; padding:0; border-radius:16px; overflow:hidden; max-width:min(90vw, 900px);
   box-shadow: var(--shadow-2);
@@ -420,8 +425,14 @@ main,
         <!-- Only School remains; pressed=true means "School day" -->
         <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
         <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+        <button class="btn btn-icon btn-ghost" id="helpBtn" aria-label="Settings and help">⚙️</button>
       </div>
     </section>
+
+    <div id="helpPopover" class="help-popover" hidden>
+      <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
+      <div class="hint">Offline-first; caches shell & last weather.</div>
+    </div>
 
     <main class="app-grid">
       <div class="left-stack">
@@ -505,26 +516,25 @@ main,
         <section class="card" aria-label="Schedules">
         <header class="card-head"><div class="card-title">Class schedules</div></header>
         <div class="schedule-actions">
-          <div>
-            <div><b>Onyx</b></div>
-            <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="onyxView">View</button>
-            <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
+          <div class="schedule-row">
+            <b>Onyx</b>
+            <div class="actions">
+              <button class="btn btn-icon btn-ghost" id="onyxImport" title="Import schedule photo" aria-label="Import schedule photo">📷</button>
+              <button class="btn btn-icon btn-ghost" id="onyxView" title="View" aria-label="View">👁️</button>
+              <button class="btn btn-icon btn-ghost" id="onyxAddEvent" title="Add event(s)" aria-label="Add event(s)">+</button>
+            </div>
           </div>
-          <div>
-            <div><b>Peregrine</b></div>
-            <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="pereView">View</button>
-            <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
+          <div class="schedule-row">
+            <b>Peregrine</b>
+            <div class="actions">
+              <button class="btn btn-icon btn-ghost" id="pereImport" title="Import schedule photo" aria-label="Import schedule photo">📷</button>
+              <button class="btn btn-icon btn-ghost" id="pereView" title="View" aria-label="View">👁️</button>
+              <button class="btn btn-icon btn-ghost" id="pereAddEvent" title="Add event(s)" aria-label="Add event(s)">+</button>
+            </div>
           </div>
         </div>
         <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
       </section>
-
-        <section class="card utilities" aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
-          <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
-          <div class="hint">Offline-first; caches shell & last weather.</div>
-        </section>
       </div>
 
       <aside class="right-stack">
@@ -666,7 +676,6 @@ main,
     toggleDense:document.getElementById('toggleDense'),
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
-    exportBtn:document.getElementById('exportBtn'),
     quickAdd:document.getElementById('quickAdd'),
     tagsBar:document.querySelector('.today-tags'),
     schoolChip:document.querySelector('[data-tag="school"]'),
@@ -678,7 +687,10 @@ main,
     pereAddEvent:document.getElementById('pereAddEvent'),
     modal:document.getElementById('imgModal'),
     modalImg:document.getElementById('modalImg'),
-    modalClose:document.getElementById('modalClose')
+    modalClose:document.getElementById('modalClose'),
+    helpBtn:document.getElementById('helpBtn'),
+    helpPopover:document.getElementById('helpPopover'),
+    exportBtn:document.getElementById('exportBtn')
   };
 
   document.querySelectorAll('input[type="number"]').forEach(inp=>{
@@ -699,6 +711,7 @@ main,
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
   el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
+  el.helpBtn.onclick=()=>el.helpPopover.toggleAttribute('hidden');
   el.exportBtn.onclick=exportJSON;
   const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
   if (el.wxUseLoc) {
