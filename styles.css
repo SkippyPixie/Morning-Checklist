@@ -8,7 +8,21 @@
   --rail-bg:#fbf8f4;   /* right rail surface */
   --radius:16px;
   --radius-sm:12px;
-  --space-1:8px; --space-2:12px; --space-3:16px; --space-4:24px;
+
+  /* spacing */
+  --space-1:8px;
+  --space-2:16px;
+  --space-3:24px;
+  --space-4:32px;
+  --space-5:40px;
+  --space-6:48px;
+  --space-7:56px;
+
+  /* type scale */
+  --text-s:13px;
+  --text-m:16px;
+  --text-l:20px;
+  --text-xl:32px;
 }
 
 html, body{ background:var(--canvas); color:var(--ink); }
@@ -47,17 +61,17 @@ html, body{ background:var(--canvas); color:var(--ink); }
 
 /* Section headers */
 .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2); }
-.section-title{ font-weight:600; font-size:1rem; letter-spacing:-0.01em; }
-.subhead{ font-size:.9rem; font-weight:600; margin-bottom:var(--space-2); }
-.link-action{ font-size:.875rem; text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
+.section-title{ font-weight:600; font-size:var(--text-l); letter-spacing:-0.01em; }
+.subhead{ font-size:var(--text-m); font-weight:600; margin-bottom:var(--space-2); }
+.link-action{ font-size:var(--text-s); text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
 .link-action:hover{ opacity:1; text-decoration:none; }
 
 /* Inputs */
 .input-group{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:var(--space-2); }
 .field{ display:block; }
-.label{ display:block; font-size:.75rem; color:var(--muted); }
+.label{ display:block; font-size:var(--text-s); color:var(--muted); }
 .input{
-  margin-top:4px; width:100%; height:42px;
+  margin-top:var(--space-1); width:100%; height:var(--space-5);
   padding:0 var(--space-2);
   border:1px solid var(--border);
   border-radius:var(--radius-sm);
@@ -72,10 +86,10 @@ html, body{ background:var(--canvas); color:var(--ink); }
 .backpack{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--space-3); }
 .chips{ display:flex; flex-wrap:wrap; gap:var(--space-1); }
 .chip{
-  height:30px; padding:0 var(--space-2);
+  height:var(--space-4); padding:0 var(--space-2);
   border:1px solid var(--border);
   border-radius:999px; background:transparent; cursor:pointer;
-  font-size:.875rem; line-height:30px; color: var(--ink);
+  font-size:var(--text-s); line-height:var(--space-4); color: var(--ink);
 }
 .chip[aria-pressed="true"]{ background:#f3f4f6; border-color:#ded8cf; }
 
@@ -91,9 +105,9 @@ html, body{ background:var(--canvas); color:var(--ink); }
 }
 
 /* Timeline tweaks (match current classes) */
-.timeline{ display:flex; flex-direction:column; gap:12px; }
+.timeline{ display:flex; flex-direction:column; gap:var(--space-2); }
 .timeline .timeline-item{ border-radius:var(--radius-sm); }
-.timeline .timeline-item.warning{ background:#fff5f2; }
+.timeline .timeline-item.warning{ background:#FFF8E6; }
 
 /* Hide buffers sentence visually (logic preserved) */
 .leave-buffers{
@@ -106,32 +120,34 @@ html, body{ background:var(--canvas); color:var(--ink); }
   display:grid;
   grid-template-columns:56px 1fr 28px; /* time badge | content | action */
   align-items:center;
-  gap:12px;
-  min-height:56px;
-  padding:12px 16px;
+  gap:var(--space-2);
+  min-height:var(--space-7);
+  padding:var(--space-2) var(--space-2);
   background:#fff;
   border:1px solid var(--border);
   border-radius:var(--radius-sm);
   box-sizing:border-box;
 }
-#timeline-rail .task + .task{ margin-top:12px; }
+#timeline-rail .task + .task{ margin-top:var(--space-2); }
 
 /* Left-rail time circles: smaller type, sage colour */
 #timeline-rail .task .time{
-  width:44px; height:44px; border-radius:999px;
+  width:var(--space-5); height:var(--space-5); border-radius:999px;
   display:grid; place-items:center;
   background: rgba(156,171,134,.18);         /* sage fill */
   border:1px solid #9CAB86;                   /* sage border */
-  color:#444; font-size:12px; font-weight:600; line-height:1;
+  color:#444; font-size:var(--text-s); font-weight:600; line-height:1;
 }
 
 /* Remove duplicate time copy inside cards if present */
 #timeline-rail .task .time-inline{ display:none !important; }
 
 /* Keep medication/highlight tint intact */
-#timeline-rail .task.med,
-#timeline-rail .task.warning{
+#timeline-rail .task.med{
   background:#FFF3F3; border-color:#FFD5D5;
+}
+#timeline-rail .task.warning{
+  background:#FFF8E6; border-color:#F0E1B6;
 }
 
 /* Scope weather icon so it can't blow up in the rail */
@@ -139,7 +155,7 @@ html, body{ background:var(--canvas); color:var(--ink); }
 #timeline-rail .wx-icon{ display:none !important; }
 
 /* Leave plan: compact, centred inputs */
-#leave-plan .input{ height:40px; text-align:center; }
+#leave-plan .input{ height:var(--space-5); text-align:center; }
 
 /* Hide “buffers” sentence visually (logic preserved) */
 .leave-buffers{
@@ -154,20 +170,20 @@ html, body{ background:var(--canvas); color:var(--ink); }
 /* 1) Morning Timeline — scoped to the right rail */
 #timeline-rail .task{
   display:grid; grid-template-columns:56px 1fr 28px;
-  align-items:center; gap:12px;
-  min-height:56px; padding:12px 16px;
+  align-items:center; gap:var(--space-2);
+  min-height:var(--space-7); padding:var(--space-2) var(--space-2);
   background:#fff; border:1px solid var(--border);
-  border-radius:12px; box-sizing:border-box;
+  border-radius:var(--radius-sm); box-sizing:border-box;
 }
-#timeline-rail .task + .task{ margin-top:12px; }
+#timeline-rail .task + .task{ margin-top:var(--space-2); }
 
 /* left-rail time badge: smaller text + sage */
 #timeline-rail .task .time{
-  width:44px; height:44px; border-radius:999px;
+  width:var(--space-5); height:var(--space-5); border-radius:999px;
   display:grid; place-items:center;
   background: rgba(156,171,134,.18);       /* sage fill */
   border:1px solid #9CAB86;                 /* sage border */
-  color:#444; font-size:12px; font-weight:600; line-height:1;
+  color:#444; font-size:var(--text-s); font-weight:600; line-height:1;
 }
 
 /* hide duplicate time printed inside the card content, if present */
@@ -179,10 +195,10 @@ html, body{ background:var(--canvas); color:var(--ink); }
 
 /* 2) Leave plan — compact, centred inputs; hide buffers text */
 #leave-plan .input{
-  height:40px; text-align:center;
-  border-radius:12px;
+  height:var(--space-5); text-align:center;
+  border-radius:var(--radius-sm);
 }
-#leave-plan .input-group{ display:grid; grid-template-columns:1fr 120px 120px; gap:16px; }
+#leave-plan .input-group{ display:grid; grid-template-columns:1fr 120px 120px; gap:var(--space-2); }
 .leave-buffers{
   position:absolute !important; width:1px; height:1px; overflow:hidden;
   clip:rect(1px,1px,1px,1px);
@@ -190,11 +206,11 @@ html, body{ background:var(--canvas); color:var(--ink); }
 
 /* 3) Backpacks — chip look using existing checkboxes (no DOM change) */
 #backpacks .checklist,
-#backpacks .list{ display:flex; flex-wrap:wrap; gap:8px 8px; }
+#backpacks .list{ display:flex; flex-wrap:wrap; gap:var(--space-1) var(--space-1); }
 
 #backpacks label{                 /* assume label wraps the input+text */
-  display:inline-flex; align-items:center; gap:8px;
-  padding:6px 12px; height:30px; line-height:30px;
+  display:inline-flex; align-items:center; gap:var(--space-1);
+  padding:var(--space-1) var(--space-2); height:var(--space-4); line-height:var(--space-4);
   border:1px solid var(--border); border-radius:999px;
   background:#fff; color:#232323; cursor:pointer;
 }
@@ -210,6 +226,6 @@ html, body{ background:var(--canvas); color:var(--ink); }
   background:#f3f4f6; border-color:#ded8cf; opacity:.6;
 }
 
-/* 4) Minor: ensure link-action looks subdued and consistent */
-.link-action{ font-size:.875rem; text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
-.link-action:hover{ opacity:1; text-decoration:none; }
+  /* 4) Minor: ensure link-action looks subdued and consistent */
+  .link-action{ font-size:var(--text-s); text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
+  .link-action:hover{ opacity:1; text-decoration:none; }
