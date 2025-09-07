@@ -36,14 +36,14 @@ html, body{ background:var(--canvas); color:var(--ink); }
 }
 
 /* Cards */
-.card{
+.card-surface{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:var(--space-3);
   box-shadow:0 1px 0 rgba(0,0,0,.02);
 }
-.card + .card{ margin-top:var(--space-3); }
+.card-surface + .card-surface{ margin-top:var(--space-3); }
 
 /* Section headers */
 .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2); }
