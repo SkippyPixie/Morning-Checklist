@@ -306,6 +306,7 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .cardlet .label{ font-weight:600; white-space:normal; }
 .cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
 .cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
+.who-chips{ margin-left:auto; display:flex; gap:6px; }
 .btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .cardlet.med{
   background: color-mix(in oklab, #FDF7F1, #fff 20%);
@@ -581,18 +582,18 @@ main,
       peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
     },
     todos:[
-      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
-      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
-      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
-      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
-      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
-      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
-      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
-      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
-      {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
-      {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
-      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
-      {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
+      {id:'t1', text:'Breakfast', who:['onyx','peregrine'], done:false, abs:'06:45'},
+      {id:'t2', text:'Check calendar (forms/special events)', who:[], done:false, abs:'07:05'},
+      {id:'t3', text:'Toothbrushing', who:['onyx','peregrine'], done:false, abs:'07:15'},
+      {id:'t4', text:'Ask Siri for today’s weather', who:['peregrine'], done:false, abs:'07:20'},
+      {id:'t5', text:'Get dressed', who:['onyx','peregrine'], done:false, abs:'07:25'},
+      {id:'t6', text:'Hairbrushing', who:['peregrine'], done:false, abs:'07:35'},
+      {id:'t7', text:'Hairbrushing', who:['onyx'], done:false, abs:'07:45'},
+      {id:'t8', text:'Medication 0.25 mg', who:['peregrine'], done:false, abs:'08:15', special:'med'},
+      {id:'t9', text:'Pack lunches & water bottles', who:[], done:false, rel:'leave', offset:-9},
+      {id:'t10', text:'Shoes on', who:['onyx','peregrine'], done:false, rel:'shoes', offset:0},
+      {id:'t11', text:'Bathroom — right before leave', who:['onyx','peregrine'], done:false, rel:'leave', offset:-3},
+      {id:'t12', text:'Leave', who:[], done:false, rel:'leave', offset:0}
     ],
     dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
     rules:[],
@@ -869,6 +870,20 @@ main,
     const SH=shoesHM||parseHM24(el.tShoes.textContent);
     const tasks=[...S.todos].sort((a,b)=> taskStartMinutes(L,SH,a) - taskStartMinutes(L,SH,b));
     rail.innerHTML='';
+
+    const makeWhoChips = whoArr => {
+      if(!whoArr || !whoArr.length) return null;
+      const wrap=document.createElement('div');
+      wrap.className='who-chips';
+      whoArr.forEach(w=>{
+        const chip=document.createElement('span');
+        chip.className='chip';
+        chip.textContent=capitalize(w);
+        wrap.appendChild(chip);
+      });
+      return wrap;
+    };
+
     const frag=document.createDocumentFragment();
     tasks.forEach(t=>{
       let start=null,end=null;
@@ -890,6 +905,8 @@ main,
         const bottle=document.createElement('div'); bottle.className='bottle'; bottle.innerHTML=BOTTLE_SVG;
         const info=document.createElement('div'); info.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         card.append(bottle,info);
+        const whoNode = makeWhoChips(t.who);
+        if(whoNode) card.appendChild(whoNode);
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
@@ -904,6 +921,8 @@ main,
         };
       } else {
         card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
+        const whoNode = makeWhoChips(t.who);
+        if(whoNode) card.appendChild(whoNode);
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
@@ -1041,11 +1060,13 @@ main,
 
   function addTaskInteractive(){
     const text=prompt('Task text','Brush teeth'); if(!text) return;
+    const whoInput=prompt('Participants? (comma separated, blank for none)','');
+    const who=whoInput?whoInput.split(/[,\s]+/).map(s=>s.trim().toLowerCase()).filter(Boolean):[];
     const when=prompt('When? Examples: "07:05", "leave -10", "shoes +0", or "range 06:45-07:15"','leave -10'); if(!when) return;
     const w=when.trim().toLowerCase(); let task=null;
-    if (w.startsWith('range ')){ const r=w.replace(/^range\s+/,'').replace('–','-'); if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) return alert('Use HH:MM-HH:MM'); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,range:r}; }
-    else if (/^\d{2}:\d{2}$/.test(w)){ task={id:'t'+Math.random().toString(36).slice(2),text,done:false,abs:w}; }
-    else if (w.startsWith('leave')||w.startsWith('shoes')){ const [rel,offStr]=w.split(/\s+/); const offset=parseInt(offStr||'0',10); task={id:'t'+Math.random().toString(36).slice(2),text,done:false,rel,offset}; }
+    if (w.startsWith('range ')){ const r=w.replace(/^range\s+/,'').replace('–','-'); if(!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(r)) return alert('Use HH:MM-HH:MM'); task={id:'t'+Math.random().toString(36).slice(2),text,who,done:false,range:r}; }
+    else if (/^\d{2}:\d{2}$/.test(w)){ task={id:'t'+Math.random().toString(36).slice(2),text,who,done:false,abs:w}; }
+    else if (w.startsWith('leave')||w.startsWith('shoes')){ const [rel,offStr]=w.split(/\s+/); const offset=parseInt(offStr||'0',10); task={id:'t'+Math.random().toString(36).slice(2),text,who,done:false,rel,offset}; }
     else return alert('Unrecognized time format.');
     S.todos.push(task); save(); recomputeTimes(); renderTimeline(); updateMedState();
   }
