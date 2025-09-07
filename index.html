@@ -275,14 +275,14 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
 /* === Timeline =========================================================== */
 /* merged timeline */
-.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
+.timeline{ position:relative; padding-left:16px; display:flex; flex-direction:column; gap:10px; }
 .timeline.dense{ gap:8px; }
 .timeline::before{
-  content:""; position:absolute; left:42px; top:0; bottom:0;
+  content:""; position:absolute; left:38px; top:0; bottom:0;
   width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
   background-size:2px 14px; border-radius:2px;
 }
-.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; }
+.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; overflow:hidden; transition:transform .2s ease, opacity .2s ease, max-height .3s ease, margin .3s ease; }
 .time-node{
   width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
   background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
@@ -297,8 +297,9 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   border: 1px solid var(--accent-border);
   animation: pulse 1.6s ease-in-out infinite;
 }
-.step.done{ opacity:var(--done-fg); }
+.step.done{ transform:translateX(-6px); opacity:.5; }
 .step.done .meta{ display:none; }
+.step.collapsed{ max-height:0; margin:0; opacity:0; }
 .cardlet{
   border:1px solid var(--border); border-radius:14px; padding:12px;
   background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
@@ -315,6 +316,11 @@ input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
 .cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
 .cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
+
+/* Timeline card + floating add */
+.timeline-card{ padding:12px; }
+.right-stack{ position:relative; display:flex; flex-direction:column; }
+.add-task-float{ position:sticky; bottom:12px; align-self:flex-end; margin-top:auto; }
 
 /* === Backpacks ========================================================== */
 .backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
@@ -528,16 +534,17 @@ main,
       </div>
 
       <aside class="right-stack">
-        <section class="card" aria-label="Morning timeline">
-          <header class="card-head">
-            <div class="card-title">Morning Timeline</div>
-            <div style="display:flex;gap:8px;align-items:center">
+        <section class="card timeline-card" aria-label="Morning timeline">
+          <header class="card-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+              <span>Morning Timeline</span>
               <button class="btn btn-ghost" id="addTask">+ Task</button>
-              <button class="btn btn-ghost" id="toggleDense">Dense</button>
             </div>
+            <button class="btn btn-ghost" id="toggleDense">Dense</button>
           </header>
           <div id="timeline"></div>
         </section>
+        <button class="btn btn-ghost add-task-float" id="addTaskBottom">+ Task</button>
       </aside>
     </main>
   </div>
@@ -663,6 +670,7 @@ main,
     schoolState:document.getElementById('schoolState'),
     timeline:document.getElementById('timeline'),
     addTask:document.getElementById('addTask'),
+    addTaskBottom:document.getElementById('addTaskBottom'),
     toggleDense:document.getElementById('toggleDense'),
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
@@ -727,6 +735,7 @@ main,
   el.pereAddEvent.onclick=()=>addRuleInteractive('peregrine');
   el.modalClose.onclick=()=>el.modal.close();
   if (el.addTask) el.addTask.onclick = addTaskInteractive;
+  if (el.addTaskBottom) el.addTaskBottom.onclick = addTaskInteractive;
   if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
   const statusEl = document.querySelector('.status-banner');
   statusEl?.classList.add('is-sticky');
@@ -898,7 +907,15 @@ main,
           if(!t.done){ if(!confirm('Confirm medication taken?')) return; t.takenAt=new Date().toISOString() }
           t.done=!t.done; save();
           step.classList.toggle('done',t.done);
-          if(t.done) step.classList.remove('due');
+          if(t.done){
+            step.style.maxHeight=step.scrollHeight+'px';
+            requestAnimationFrame(()=>step.classList.add('collapsed'));
+            step.classList.remove('due');
+          } else {
+            step.classList.remove('collapsed');
+            step.style.maxHeight='0px';
+            requestAnimationFrame(()=> step.style.maxHeight=step.scrollHeight+'px');
+          }
           updateMedState();
           refreshTimelineStates();
         };
@@ -912,7 +929,15 @@ main,
           t.done=!t.done; save();
           step.classList.toggle('done',t.done);
           card.setAttribute('aria-checked',t.done?'true':'false');
-          if(t.done) step.classList.remove('due');
+          if(t.done){
+            step.style.maxHeight=step.scrollHeight+'px';
+            requestAnimationFrame(()=>step.classList.add('collapsed'));
+            step.classList.remove('due');
+          } else {
+            step.classList.remove('collapsed');
+            step.style.maxHeight='0px';
+            requestAnimationFrame(()=> step.style.maxHeight=step.scrollHeight+'px');
+          }
           refreshTimelineStates();
         };
       }
@@ -920,6 +945,10 @@ main,
       step.appendChild(tn); step.appendChild(card); frag.appendChild(step);
     });
     rail.appendChild(frag);
+    Array.from(rail.children).forEach(s=>{
+      s.style.maxHeight=s.scrollHeight+'px';
+      if(s.classList.contains('done')) requestAnimationFrame(()=>s.classList.add('collapsed'));
+    });
     refreshTimelineStates();
   }
 
