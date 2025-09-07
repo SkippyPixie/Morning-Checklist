@@ -63,7 +63,7 @@ body{
 .tag{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-weight:600; border:1px solid var(--border); background:#FFFDF9; color:var(--sepia); cursor:pointer; }
 .tag[aria-pressed="true"]{ background:var(--pill); }
 .tag-sage{ background:var(--pill); color:var(--sepia); }
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
+.card-surface{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
 .tag{ background:#FBF6F1; border-color:#EADFD3; }
 .tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
 .card-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
@@ -218,8 +218,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 .num{ font-variant-numeric: tabular-nums; }
 
 /* helpers */
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
-.card > header{ margin-bottom:12px; }
+.card-surface{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
+.card-surface > header{ margin-bottom:12px; }
 .stack-8 > * + *{ margin-top:8px; }
 .stack-16 > * + *{ margin-top:16px; }
 .section-divider{ height:1px; background:color-mix(in oklab, var(--border), #000 5%); margin:12px 0; }
@@ -379,11 +379,11 @@ main,
 }
 
 /* cards */
-.card{
+.card-surface{
   padding: var(--card-pad);
   border-radius: var(--radius);
 }
-.card > * + *{       /* vertical rhythm inside cards */
+.card-surface > * + *{       /* vertical rhythm inside cards */
   margin-top: var(--stack-gap);
 }
 
@@ -391,8 +391,8 @@ main,
 .section-stack > * + *{ margin-top: var(--stack-gap); }
 
 /* headings: tighten top, give breathing room below */
-.card h2,
-.card h3{
+.card-surface h2,
+.card-surface h3{
   margin-top: 0;
   margin-bottom: var(--s-3);
   line-height: 1.2;
@@ -441,7 +441,7 @@ main,
 
     <main class="app-grid">
       <div class="left-stack">
-        <section class="card status-banner ok" role="region" aria-label="Status">
+        <section class="card-surface status-banner ok" role="region" aria-label="Status">
           <div class="left">
             <span class="status-dot" role="img" aria-label="On pace"></span>
             <span class="pace-text">On pace</span>
@@ -483,7 +483,7 @@ main,
           <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
         </section>
 
-        <section class="card leave-plan" aria-label="Leave plan">
+        <section class="card-surface leave-plan" aria-label="Leave plan">
         <header class="card-head">
           <div class="card-title">Leave plan</div>
           <div class="tag tag-sage" id="schoolState">School day</div>
@@ -513,7 +513,7 @@ main,
         <div class="hint" id="leaveInstr" aria-live="polite"></div>
       </section>
 
-        <section class="card backpacks" aria-label="Backpacks" id="backpacks">
+        <section class="card-surface backpacks" aria-label="Backpacks" id="backpacks">
         <header class="card-head"><div class="card-title">Backpacks</div></header>
         <div class="backpacks-grid" id="packs"></div>
         <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -522,7 +522,7 @@ main,
         </div>
       </section>
 
-        <section class="card" aria-label="Schedules">
+        <section class="card-surface" aria-label="Schedules">
         <header class="card-head"><div class="card-title">Class schedules</div></header>
         <div class="schedule-actions">
           <div class="schedule-row">
@@ -547,7 +547,7 @@ main,
       </div>
 
       <aside class="right-stack">
-        <section class="card" aria-label="Morning timeline">
+        <section class="card-surface" aria-label="Morning timeline">
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
             <div style="display:flex;gap:8px;align-items:center">
