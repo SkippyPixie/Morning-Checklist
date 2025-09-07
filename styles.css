@@ -53,7 +53,11 @@ body{ font-family:'Inter', ui-sans-serif; }
 .section-title{ font-weight:600; font-size:1rem; letter-spacing:-0.01em; }
 .subhead{ font-size:.9rem; font-weight:600; margin-bottom:var(--space-2); }
 .link-action{ font-size:.875rem; text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
+
 .link-action:hover{ opacity:1; text-decoration:none; }
+
+/* Utilities */
+.bg-primary { @apply bg-gray-50; }
 
 /* Inputs */
 .input-group{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:var(--space-2); }
