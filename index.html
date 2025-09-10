@@ -452,9 +452,8 @@ main,
 
         <section class="card-surface backpacks" aria-label="Backpacks" id="backpacks">
         <header class="card-head"><div class="card-title">Backpacks</div></header>
-        <div class="backpacks-grid" id="packs"></div>
-        <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-          <span>Tap items to toggle; changes persist.</span>
+        <div id="packs" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        <div class="hint" style="margin-top:10px; display:flex; justify-content:flex-end; align-items:center;">
           <button class="btn btn-ghost" id="resetPacks">Reset checks</button>
         </div>
       </section>
@@ -922,16 +921,29 @@ main,
     const grid=el.packs; grid.innerHTML='';
     const fragAll=document.createDocumentFragment();
     [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
-      const card=document.createElement('div'); card.className='card';
-      const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
-      const list=document.createElement('div'); list.className='backpacks-grid';
-      S.backpacks[key].forEach(item=>{
-        const btn=document.createElement('button');
-        btn.className='pack-chip';
-        btn.textContent=item.text;
-        btn.setAttribute('aria-pressed', item.done?'true':'false');
-        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
-        list.appendChild(btn);
+      const card=document.createElement('div');
+      card.className='bg-white shadow-sm rounded-xl p-4';
+      const h=document.createElement('h3');
+      h.textContent=label;
+      h.className='mb-2 text-[var(--sage)] font-semibold';
+      card.appendChild(h);
+      const list=document.createElement('div');
+      list.className='space-y-2';
+      S.backpacks[key].forEach((item,idx)=>{
+        const row=document.createElement('div');
+        row.className='flex items-center space-x-2';
+        const cb=document.createElement('input');
+        cb.type='checkbox';
+        cb.id=`pack-${key}-${idx}`;
+        cb.className='form-checkbox border-gray-300 text-[var(--sage)]';
+        cb.checked=item.done;
+        cb.onchange=()=>{ item.done=cb.checked; save(); };
+        const lab=document.createElement('label');
+        lab.htmlFor=cb.id;
+        lab.textContent=item.text;
+        row.appendChild(cb);
+        row.appendChild(lab);
+        list.appendChild(row);
       });
       card.appendChild(list);
       fragAll.appendChild(card);
