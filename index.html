@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Daily Command — iPad Rail</title>
   <meta name="theme-color" content="#5C4433" />
+  <link rel="stylesheet" href="dist/styles.css" />
   <style>
 :root{
   --parchment:#F6F1EB;
@@ -63,7 +64,7 @@ body{
 .tag{ display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-weight:600; border:1px solid var(--border); background:#FFFDF9; color:var(--sepia); cursor:pointer; }
 .tag[aria-pressed="true"]{ background:var(--pill); }
 .tag-sage{ background:var(--pill); color:var(--sepia); }
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
+.card-surface{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-1); }
 .tag{ background:#FBF6F1; border-color:#EADFD3; }
 .tag[aria-pressed="true"]{ background:#EEF5EE; border-color:#D8E7D8; }
 .card-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
@@ -77,13 +78,74 @@ body{
 :focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px; }
 
 /* ---- Weather ---- */
-.weather-hero .now{ display:flex; align-items:baseline; gap:10px; }
-.weather-hero .temp{ font-size:40px; font-weight:800; }
-.weather-hero .cond{ font-size:17px; color:var(--muted); }
-.weather-hero .stats{ display:flex; gap:16px; color:var(--muted); margin-top:6px; }
-.weather-hero.loading .now,.weather-hero.loading .stats,.weather-hero.loading .weather-mini{ opacity:.5; }
-.weather-hero.loading .temp::after{
-  content:'…'; margin-left:6px; font-weight:700; opacity:.8;
+.weather-hero{
+  --paper:#F6F1EB;
+  --ink:#5C4433;
+  --sage:#7A8C5F;
+  --line:rgba(0,0,0,.06);
+  --temp-size:clamp(72px, 9vw, 124px);
+  --r:20px;
+  --pad:24px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:var(--pad);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+.wx-grid{
+  display:grid;
+  grid-template-columns:minmax(320px, 1fr) 1fr;
+  gap:24px;
+  align-items:center;
+}
+
+.wx-lead{display:flex; flex-direction:column; gap:8px}
+.wx-lockup{display:flex; align-items:flex-end; gap:16px}
+
+.wx-temp{font-size:var(--temp-size); line-height:1; font-weight:800; color:var(--sage); letter-spacing:-0.02em}
+.wx-temp-unit{margin-left:2px}
+
+.wx-icon{
+  height:calc(var(--temp-size) * 0.96);
+  aspect-ratio:1/1;
+  object-fit:contain;
+  display:block;
+  margin-bottom:0;
+}
+.wx-icon.spin{ animation:spin .6s linear; }
+
+.wx-cond{font-size:18px; color:var(--ink)}
+
+.wx-aside{display:flex; flex-direction:column; gap:12px}
+.wx-chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  background:#fff; border:1px solid var(--line); border-radius:999px;
+  padding:6px 12px; font-size:14px; color:var(--ink)
+}
+.chip--ghost{background:transparent}
+
+.wx-stats{display:grid; grid-template-columns:repeat(2, minmax(120px,1fr)); gap:8px 16px}
+.wx-stats dt{font-size:12px; color:rgba(0,0,0,.55)}
+.wx-stats dd{font-size:16px; color:var(--ink); margin:0}
+
+.weather-mini{
+  margin-top:16px;
+  display:flex; gap:8px;
+  font-size:14px; color:var(--ink)
+}
+.weather-mini .chip{
+  height:30px; padding:0 12px;
+  background:var(--pill); border:1px solid var(--border);
+  border-radius:999px; display:inline-flex; align-items:center;
+  white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+
+.wx-updated{margin:10px 0 0; font-size:12px; color:rgba(0,0,0,.55); opacity:0; transition:opacity .4s}
+
+@media (max-width: 980px){
+  .wx-grid{grid-template-columns:1fr}
+  .wx-aside{order:2}
 }
 
 /* ---- Leave plan ---- */
@@ -100,7 +162,12 @@ body{
 .subtle{ color:var(--muted); }
 
 /* ---- Schedules & dialog ---- */
-.schedule-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.schedule-actions{ display:flex; flex-direction:column; gap:8px; }
+.schedule-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.schedule-row .actions{ display:flex; gap:4px; }
+
+/* ---- Settings popover ---- */
+.help-popover{ position:absolute; top:60px; right:16px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:var(--pad); box-shadow:var(--shadow-2); z-index:1000; width:220px; }
 dialog.modal{
   border:none; padding:0; border-radius:16px; overflow:hidden; max-width:min(90vw, 900px);
   box-shadow: var(--shadow-2);
@@ -125,6 +192,11 @@ dialog.modal{
   --mauve:#9B8D88;
   --border:#E6DBCE;
   --pill:#EEF4EC;
+  --railW: clamp(360px, 28vw, 460px);
+  --ring:#C7D7C5;
+  --soft:#F7F3EE;
+  --ink:#2E2A27;
+
   /* layout + type */
   --gap:16px;
   --pad:16px;
@@ -147,8 +219,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 .num{ font-variant-numeric: tabular-nums; }
 
 /* helpers */
-.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
-.card > header{ margin-bottom:12px; }
+.card-surface{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:var(--pad); }
+.card-surface > header{ margin-bottom:12px; }
 .stack-8 > * + *{ margin-top:8px; }
 .stack-16 > * + *{ margin-top:16px; }
 .section-divider{ height:1px; background:color-mix(in oklab, var(--border), #000 5%); margin:12px 0; }
@@ -173,6 +245,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   border:1px solid color-mix(in oklab, var(--border), #000 4%);
   border-radius:24px; padding:10px 14px; box-shadow:var(--shadow-1);
 }
+.status-banner.pulse{ animation:pulse .6s ease; }
 .status-banner .left{ display:flex; align-items:center; gap:10px; }
 .status-dot{ width:8px; height:8px; border-radius:999px; background:#7FB086; }
 .status-banner .times{ font-weight:600; }
@@ -188,36 +261,84 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   background: color-mix(in oklab, var(--sage), #fff 78%);
 }
 
-/* === Weather card ======================================================= */
-.weather header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.weather .tools{ display:flex; align-items:center; gap:8px; }
-.weather-hero{ display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:12px; }
-.weather-hero .temp{ font-size:var(--fs-xl); font-weight:800; letter-spacing:-.015em; }
-.weather-hero .desc{ color:var(--muted); }
-.weather-mini{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
-.weather-mini .cell{
-  background:var(--pill); border:1px solid var(--border);
-  border-radius:12px; padding:10px 8px; text-align:center;
-}
-.weather-mini .t{ font-weight:600; }
-.weather .foot{ margin-top:10px; color:var(--muted); font-size:var(--fs-xs); }
-
-/* windy hint via class on .weather */
-.weather.windy header .tag{ 
+/* windy hint via class on .weather-hero */
+.weather-hero.windy .wx-chips .chip{
   background: color-mix(in oklab, #DDEBF0, #fff 60%);
   border-color: color-mix(in oklab, #B6D2DA, #000 8%);
 }
 
 /* === Leave plan ========================================================= */
+.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
+.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
+.input{
+  background:#FFFEFD; border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 12px;
+  height:var(--field-h); text-align:center; width:100%;
+}
+.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
+input[type=number]{ -moz-appearance:textfield; }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.hint{ color:var(--muted); font-size:var(--fs-xs); }
+
+/* === Timeline =========================================================== */
+/* merged timeline */
+.timeline{ position:relative; padding-left:20px; display:flex; flex-direction:column; gap:12px; }
+.timeline.dense{ gap:8px; }
+.timeline::before{
+  content:""; position:absolute; left:42px; top:0; bottom:0;
+  width:2px; background:linear-gradient(#EDE5DB, transparent 6px) repeat-y;
+  background-size:2px 14px; border-radius:2px;
+}
+.step{ display:grid; grid-template-columns:56px 1fr; gap:12px; transition:opacity .2s ease; }
+.time-node{
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background: var(--sage-bg); border:1px solid var(--sage); color:var(--ink-700);
+  font-size:12px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;
 }
 .step.now .time-node{
   border-color: color-mix(in oklab, var(--sage), #000 10%);
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--sage), #fff 85%);
 }
+.step.due .cardlet{
+  background: var(--accent);
+  border: 1px solid var(--accent-border);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.step.done{ opacity:var(--done-fg); }
+.step.done .meta{ display:none; }
+.cardlet{
+  border:1px solid var(--border); border-radius:14px; padding:12px;
+  background:var(--card); box-shadow:var(--shadow-1); display:flex; align-items:flex-start; gap:12px; position:relative;
+  transition:transform .2s ease;
+}
+.step.done .cardlet{ transform:translateX(-6px); }
+.cardlet .label{ font-weight:600; white-space:normal; }
+.cardlet .meta{ font-size:var(--fs-xxs); margin-top:4px; color:var(--muted); }
+.cardlet .actions{ margin-left:auto; display:flex; gap:6px; }
+.btn-icon{ width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center; }
 .cardlet.med{
   background: color-mix(in oklab, #FDF7F1, #fff 20%);
   border-color: color-mix(in oklab, var(--mauve), #000 8%);
 }
+.cardlet.med.armed{ background:#F5FAF6; border-color:#D9EAD9; }
+.cardlet.med.due{   background:#FFF8E6; border-color:#F0E1B6; }
+.cardlet.med.late{  background:#FFF1F1; border-color:#F1C8C8; }
+.cardlet.med .bottle{ width:32px;height:32px; margin-right:6px; opacity:.95; }
+
+/* === Backpacks ========================================================== */
+.backpacks-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.pack-chip{
+  padding:10px 12px; border-radius:10px; line-height:1.2;
+  border:1px solid rgba(0,0,0,.06); background:#fff; text-align:left;
+  transition:background .2s ease, border-color .2s ease, opacity .2s ease;
+  color:var(--ink-900);
+}
+.pack-chip[aria-pressed="true"]{ opacity:.55; }
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .step.due .cardlet, .status-banner.pulse, .wx-icon.spin{ animation:none; } }
 
 /* === Motion ============================================================= */
 @media (prefers-reduced-motion:no-preference){
@@ -225,29 +346,175 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   .step.now .cardlet{ transition: box-shadow .15s, border-color .15s; }
   .chip{ transition: background-color .15s, border-color .15s; }
 }
+/* === SPACING NORMALIZATION PATCH — 2025-08-29 === */
+:root{
+  /* 8px scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* app specifics */
+  --grid-gap: var(--s-6);       /* column gutter */
+  --card-pad: var(--s-5);       /* inner card padding */
+  --stack-gap: var(--s-4);      /* vertical rhythm inside cards */
+  --timeline-gap: var(--s-2);   /* space between timeline items */
+  --timeline-minh: 56px;        /* consistent row height */
+  --field-h:40px;
+  --radius:12px;
+  --accent:#EAE6FF;
+  --accent-border:#C8BFFF;
+  --done-fg:0.5;
+}
+
+/* two-column layout: left content + right timeline */
+main,
+.app-grid{
+  display: grid;
+  grid-template-columns: 1fr minmax(340px, 380px);
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+/* cards */
+.card-surface{
+  padding: var(--card-pad);
+  border-radius: var(--radius);
+}
+.card-surface > * + *{       /* vertical rhythm inside cards */
+  margin-top: var(--stack-gap);
+}
+
+/* make card stacks consistent */
+.section-stack > * + *{ margin-top: var(--stack-gap); }
+
+/* headings: tighten top, give breathing room below */
+.card-surface h2,
+.card-surface h3{
+  margin-top: 0;
+  margin-bottom: var(--s-3);
+  line-height: 1.2;
+}
+
+:root{
+  --sage:#9CAB86;
+  --sage-bg: rgba(156,171,134,.18);
+  --ink-900:#222;
+  --ink-700:#444;
+}
+
+
+/* keep meds item larger and tinted */
+
+
+.leave-form{
+  display:grid; grid-template-columns:1fr 110px 110px; gap:16px; align-items:end;
+}
+.leave-form .field label{ display:block; margin:0 0 6px; font-weight:600; }
+.leave-form input[type="time"],
+.leave-form input[type="number"]{
+  height:40px; border-radius:12px; text-align:center; width:100%;
+}
+
+
+
   </style>
 </head>
-<body>
-  <div class="app">
+<body class="bg-primary">
+  <div class="app bg-primary">
+    <section class="today-strip" aria-label="Today">
+      <div class="today-date" id="todayDate">Today</div>
+      <div class="today-tags">
+        <!-- Only School remains; pressed=true means "School day" -->
+        <span class="chip" role="button" tabindex="0" aria-pressed="true" data-tag="school">School</span>
+        <button class="btn btn-ghost" id="quickAdd" aria-label="Quick add event">+ Event</button>
+        <button class="btn btn-icon btn-ghost" id="helpBtn" aria-label="Settings and help">⚙️</button>
+      </div>
+    </section>
+
+    <div id="helpPopover" class="help-popover" hidden>
+      <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
+      <div class="hint">Offline-first; caches shell & last weather.</div>
+    </div>
+
+    <main class="app-grid">
+      <div class="left-stack">
+        <section class="card-surface status-banner ok" role="region" aria-label="Status">
+          <div class="left">
+            <span class="status-dot" role="img" aria-label="On pace"></span>
+            <span class="pace-text">On pace</span>
+          </div>
           <div class="times">
-            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
+            <span>Shoes <span id="shoesTime">8:15 AM</span></span> • <span>Leave <span id="leaveTime">8:20 AM</span></span>
           </div>
           <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
+        </section>
+
+        <section class="weather-hero" aria-label="Weather" id="weatherCard">
+          <div class="wx-grid">
+            <div class="wx-lead">
+              <div class="wx-lockup">
+                <div class="wx-temp" aria-label="Temperature">
+                  <span class="wx-temp-value" id="wxTempValue">--</span><span class="wx-temp-unit">°</span>
+                </div>
+                <img class="wx-icon" id="wx-icon" src="" alt="Condition icon" />
+              </div>
+              <div class="wx-cond" aria-label="Condition" id="wx-desc">—</div>
+            </div>
+            <aside class="wx-aside">
+              <div class="wx-chips">
+                <button class="chip" id="wxLocation">Hamilton</button>
+                <button class="chip" id="wxRefresh">Refresh</button>
+                <button class="chip chip--ghost" id="wxUseLoc">Use location</button>
+              </div>
+              <dl class="wx-stats">
+                <div><dt>Feels</dt><dd id="wxFeels">--°</dd></div>
+                <div><dt>Wind</dt><dd id="wxWind">-- km/h</dd></div>
+                <div><dt>Humidity</dt><dd id="wxHumidity">--%</dd></div>
+                <div><dt>Rain</dt><dd id="wxRain">--%</dd></div>
+              </dl>
+            </aside>
+          </div>
+          <div class="weather-mini" aria-label="Hourly" id="wxHours"></div>
+          <p class="wx-updated" id="wxUpdated">Updated --:--</p>
+          <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
+          <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
+        </section>
+
+        <section class="card-surface leave-plan" aria-label="Leave plan">
+        <header class="card-head">
+          <div class="card-title">Leave plan</div>
+          <div class="tag tag-sage" id="schoolState">School day</div>
+        </header>
+        <div class="leave-form">
+          <div class="field">
+            <label for="arrival" class="label">Arrival time</label>
+            <input id="arrival" type="time" value="08:35" />
           </div>
           <div class="field">
             <label for="commute" class="label">Commute (min)</label>
             <input id="commute" type="number" min="0" step="1" value="15" />
           </div>
+          <div class="field">
+            <label for="shoesLead" class="label">Shoes lead (min)</label>
+            <input id="shoesLead" type="number" min="0" step="1" value="5" />
           </div>
         </div>
         <div class="switch" style="margin-top:10px">
           <input id="schoolOut" type="checkbox" />
           <label for="schoolOut">School's Out (PA day)</label>
         </div>
-        <div class="hint leave-buffers">Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.</div>
+        <details class="hint leave-buffers">
+          <summary>Timing buffers</summary>
+          Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.
+        </details>
+        <div class="hint" id="leaveInstr" aria-live="polite"></div>
       </section>
 
-        <section class="card backpacks" aria-label="Backpacks" id="backpacks">
+        <section class="card-surface backpacks" aria-label="Backpacks" id="backpacks">
         <header class="card-head"><div class="card-title">Backpacks</div></header>
         <div class="backpacks-grid" id="packs"></div>
         <div class="hint" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -256,33 +523,32 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
         </div>
       </section>
 
-        <section class="card" aria-label="Schedules">
+        <section class="card-surface" aria-label="Schedules">
         <header class="card-head"><div class="card-title">Class schedules</div></header>
         <div class="schedule-actions">
-          <div>
-            <div><b>Onyx</b></div>
-            <button class="btn btn-ghost" id="onyxImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="onyxView">View</button>
-            <button class="btn btn-ghost" id="onyxAddEvent">Add event(s)</button>
+          <div class="schedule-row">
+            <b>Onyx</b>
+            <div class="actions">
+              <button class="btn btn-icon btn-ghost" id="onyxImport" title="Import schedule photo" aria-label="Import schedule photo">📷</button>
+              <button class="btn btn-icon btn-ghost" id="onyxView" title="View" aria-label="View">👁️</button>
+              <button class="btn btn-icon btn-ghost" id="onyxAddEvent" title="Add event(s)" aria-label="Add event(s)">+</button>
+            </div>
           </div>
-          <div>
-            <div><b>Peregrine</b></div>
-            <button class="btn btn-ghost" id="pereImport">Import schedule photo</button>
-            <button class="btn btn-ghost" id="pereView">View</button>
-            <button class="btn btn-ghost" id="pereAddEvent">Add event(s)</button>
+          <div class="schedule-row">
+            <b>Peregrine</b>
+            <div class="actions">
+              <button class="btn btn-icon btn-ghost" id="pereImport" title="Import schedule photo" aria-label="Import schedule photo">📷</button>
+              <button class="btn btn-icon btn-ghost" id="pereView" title="View" aria-label="View">👁️</button>
+              <button class="btn btn-icon btn-ghost" id="pereAddEvent" title="Add event(s)" aria-label="Add event(s)">+</button>
+            </div>
           </div>
         </div>
         <div class="hint">Upload a monthly snapshot; then add dated events (e.g., “Wear Purple Day — 2025-10-03”). Matching days show chips up top.</div>
       </section>
-
-        <section class="card utilities" aria-label="Utilities" style="display:flex; justify-content:space-between; align-items:center;">
-          <button class="btn btn-primary" id="exportBtn" aria-label="Export data as JSON">Export JSON</button>
-          <div class="hint">Offline-first; caches shell & last weather.</div>
-        </section>
       </div>
 
       <aside class="right-stack">
-        <section class="card" aria-label="Morning timeline">
+        <section class="card-surface" aria-label="Morning timeline">
           <header class="card-head">
             <div class="card-title">Morning Timeline</div>
             <div style="display:flex;gap:8px;align-items:center">
@@ -327,25 +593,24 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
 
   // ---------- Default state ----------
   const DEFAULT_STATE={
-    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
-    wx:{now:null,high:null,low:null,rain:null,wind:null,code:null,desc:'',icon:'⛅',hours:[],lastUpdated:null},
+    settings:{ arrival:'08:35', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
+    wx:{now:null,feels:null,wind:null,humidity:null,rain:null,code:null,desc:'',hours:[],lastUpdated:null},
     events:[],
     backpacks:{
       onyx:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}],
       peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
     },
     todos:[
-      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
-      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
-      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
-      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
-      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
-      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
-      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
-      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
+      {id:'t1', text:'Breakfast', done:false, abs:'06:35'},
+      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'06:55'},
+      {id:'t3', text:'Toothbrushing', done:false, abs:'07:05'},
+      {id:'t4', text:'Ask Siri for today’s weather', done:false, abs:'07:10'},
+      {id:'t5', text:'Get dressed', done:false, abs:'07:15'},
+      {id:'t6', text:'Hairbrushing', done:false, range:'07:25-07:35'},
+      {id:'t8', text:'Peregrine medication', done:false, abs:'08:05', special:'med'},
       {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
       {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
-      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
+      {id:'t11', text:'Bathroom', done:false, rel:'leave', offset:-3},
       {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
     ],
     dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
@@ -407,7 +672,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     todayDate:document.getElementById('todayDate'),
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
+    leaveInstr:document.getElementById('leaveInstr'),
     plus5:document.getElementById('plus5'),
+    wx:{ loc:document.getElementById('wxLocation'), tempVal:document.getElementById('wxTempValue'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), feels:document.getElementById('wxFeels'), wind:document.getElementById('wxWind'), humidity:document.getElementById('wxHumidity'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing'), updated:document.getElementById('wxUpdated') },
     wxUseLoc:document.getElementById('wxUseLoc'),
     arrival:document.getElementById('arrival'),
     commute:document.getElementById('commute'),
@@ -419,7 +686,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     toggleDense:document.getElementById('toggleDense'),
     packs:document.getElementById('packs'),
     resetPacks:document.getElementById('resetPacks'),
-    exportBtn:document.getElementById('exportBtn'),
     quickAdd:document.getElementById('quickAdd'),
     tagsBar:document.querySelector('.today-tags'),
     schoolChip:document.querySelector('[data-tag="school"]'),
@@ -431,7 +697,10 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     pereAddEvent:document.getElementById('pereAddEvent'),
     modal:document.getElementById('imgModal'),
     modalImg:document.getElementById('modalImg'),
-    modalClose:document.getElementById('modalClose')
+    modalClose:document.getElementById('modalClose'),
+    helpBtn:document.getElementById('helpBtn'),
+    helpPopover:document.getElementById('helpPopover'),
+    exportBtn:document.getElementById('exportBtn')
   };
 
   document.querySelectorAll('input[type="number"]').forEach(inp=>{
@@ -452,6 +721,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
   el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
+  el.helpBtn.onclick=()=>el.helpPopover.toggleAttribute('hidden');
   el.exportBtn.onclick=exportJSON;
   const btnRefresh=document.getElementById('wxRefresh'); if(btnRefresh){ btnRefresh.onclick=()=>fetchWeather() }
   if (el.wxUseLoc) {
@@ -483,6 +753,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   if (el.toggleDense) el.toggleDense.onclick = ()=> el.timeline.classList.toggle('dense');
   const statusEl = document.querySelector('.status-banner');
   statusEl?.classList.add('is-sticky');
+  let lastPaceState;
 
   recomputeTimes();
   renderTimeline();
@@ -500,19 +771,38 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
 
   async function fetchWeather(){
+    const icon=el.wx.icon, updated=el.wx.updated;
+    updated.style.opacity=0;
+    icon.classList.add('spin');
+    icon.addEventListener('animationend',()=>icon.classList.remove('spin'),{once:true});
     document.querySelector('.weather-hero')?.classList.add('loading');
     const {lat,lon}=S.settings; const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode',daily:'temperature_2m_max,temperature_2m_min'});
+    const params=new URLSearchParams({latitude:lat,longitude:lon,timezone:tz,current_weather:'true',hourly:'temperature_2m,precipitation_probability,wind_speed_10m,weathercode,relativehumidity_2m,apparent_temperature',daily:'temperature_2m_max,temperature_2m_min'});
     const url='https://api.open-meteo.com/v1/forecast?'+params.toString();
     let ok=true,data;
     try{ const res=await fetch(url,{cache:'no-store'}); ok=res.ok; data=await res.json() }catch(e){ ok=false }
     if(ok&&data){
-      const h=data.hourly; const c=data.current_weather; const d=data.daily; const idx8=hourIndex(h.time,8); const r8=idx8>=0?h.precipitation_probability[idx8]:0;
-      S.wx={ now:Math.round(c.temperature), high:Math.round(d.temperature_2m_max[0]), low:Math.round(d.temperature_2m_min[0]), rain:r8, wind:Math.round(c.windspeed), code:c.weathercode, desc:wxDesc(c.weathercode), icon:wxIcon(c.weathercode), hours:sliceHours(h), lastUpdated:new Date().toISOString() };
+      const h=data.hourly; const c=data.current_weather; const d=data.daily;
+      const idx8=hourIndex(h.time,8);
+      const idxNow=hourIndex(h.time,new Date().getHours());
+      const r8=idx8>=0?h.precipitation_probability[idx8]:0;
+      S.wx={
+        now:Math.round(c.temperature),
+        feels:idxNow>=0?Math.round(h.apparent_temperature[idxNow]):null,
+        wind:Math.round(c.windspeed),
+        humidity:idxNow>=0?Math.round(h.relativehumidity_2m[idxNow]):null,
+        rain:r8,
+        code:c.weathercode,
+        desc:wxDesc(c.weathercode),
+        hours:sliceHours(h),
+        lastUpdated:new Date().toISOString()
+      };
       save(); el.wx.cached.hidden=true
     } else { el.wx.cached.hidden=false }
     document.querySelector('.weather-hero')?.classList.remove('loading');
-    renderWeather(); recomputeTimes()
+    renderWeather();
+    requestAnimationFrame(()=>updated.style.opacity=1);
+    recomputeTimes()
   }
 
   function sliceHours(h){
@@ -524,37 +814,42 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     return Array.from(map.values());
   }
 
-  const WX_ICON=[[/thunder|storm/i,"⛈️"],[/snow|sleet|flurr/i,"❄️"],[/rain|shower/i,"🌧️"],[/hail/i,"🌨️"],[/fog|mist|haze/i,"🌫️"],[/overcast|cloudy/i,"☁️"],[/partly|mostly\s*clear|few clouds/i,"⛅️"],[/clear|sunny/i,"☀️"]];
-  function pickWxIcon(desc){ for(const [re,icon] of WX_ICON){ if(re.test(desc)) return icon; } return "🌡️"; }
+  function emojiSrc(emoji){
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>${emoji}</text></svg>`;
+    return 'data:image/svg+xml,'+encodeURIComponent(svg);
+  }
 
   function renderWeather(){
     const W=S.wx;
-    el.wx.temp.textContent=(W.now??'--')+'°';
+    el.wx.tempVal.textContent=(W.now??'--');
     el.wx.desc.textContent=W.desc||'—';
-    el.wx.icon.textContent=pickWxIcon(W.desc||'');
-    el.wx.hi.textContent=(W.high??'--');
-    el.wx.lo.textContent=(W.low??'--');
+    el.wx.icon.src=emojiSrc(wxIcon(W.code));
+    el.wx.icon.alt=W.desc||'';
+    el.wx.feels.textContent=(W.feels??'--')+'°';
+    el.wx.wind.textContent=(W.wind??'--')+' km/h';
+    el.wx.humidity.textContent=(W.humidity??'--')+'%';
     el.wx.rain.textContent=(W.rain??'--')+'%';
     el.wx.loc.textContent=S.settings.place||'—';
     const picks=[7,10,13,16,19];
     el.wx.hours.innerHTML='';
     const frag=document.createDocumentFragment();
     picks.forEach(h=>{
-      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null,pop:null,code:null};
-      const cell=document.createElement('div'); cell.className='cell';
-      cell.innerHTML=`<div class="t">${hrLabel12(h)}</div><div class="v">${wxIcon(itm.code)} ${itm.temp??'--'}°</div><div class="t">${(itm.pop??'--')}%</div>`;
-      frag.appendChild(cell);
+      const itm=W.hours.find(x=>x?.hr===h) || {hr:h,temp:null};
+      const time=hrLabel12(h);
+      const temp=itm.temp!=null?formatTempC(itm.temp):`--\u00a0°C`;
+      const chip=document.createElement('div'); chip.className='chip';
+      chip.textContent=`${time} \u00b7 ${temp}`;
+      const timeLbl=time.replace('\u00a0',' ');
+      if(itm.temp!=null){ chip.setAttribute('aria-label',`${timeLbl}, ${ariaTemp(itm.temp)} degrees Celsius`); }
+      else{ chip.setAttribute('aria-label',timeLbl); }
+      frag.appendChild(chip);
     });
     el.wx.hours.appendChild(frag);
     el.wx.clothing.textContent='Clothing: '+clothingFor(W.code,W.now,W.rain,W.wind);
-    const card=document.querySelector('.weather');
-    if(card){
-      card.classList.toggle('windy',(S.wx?.wind??0)>=28);
-      const foot=card.querySelector('.foot')||card.appendChild(document.createElement('div'));
-      foot.className='foot';
-      const ts=S.wx?.lastUpdated?new Date(S.wx.lastUpdated):new Date();
-      foot.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
-    }
+    const ts=W.lastUpdated?new Date(W.lastUpdated):new Date();
+    el.wx.updated.textContent=`Updated ${ts.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    const card=document.querySelector('.weather-hero');
+    card?.classList.toggle('windy',(W.wind??0)>=28);
   }
 
   function bufferByWeather(){ if(!currentFlags().schoolDay) return 0; const code=S.wx.code; if(isSnow(code)) return 15; if(isRain(code)) return 10; return 0 }
@@ -566,12 +861,18 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     const buf=bufferByWeather(); const extra=currentFlags().extraBuffer|0;
     const leave=minutesToHM(hmToMinutes(arr)-commute-buf-extra);
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
-    el.tLeave.textContent=hmToStr12(leave); el.tShoes.textContent=hmToStr12(shoes);
+    const leaveStr12=hmToStr12(leave); const shoesStr12=hmToStr12(shoes);
+    el.tLeave.textContent=leaveStr12; el.tShoes.textContent=shoesStr12;
+    if(el.leaveInstr){
+      const leaveStr=leaveStr12.slice(0,-3); const shoesStr=shoesStr12.slice(0,-3);
+      el.leaveInstr.textContent=`Start shoes by ${shoesStr} to leave ${leaveStr}`;
+    }
     const shoesEl=document.getElementById('shoesTime');
     const leaveEl=document.getElementById('leaveTime');
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
     if(shoesEl) shoesEl.parentElement?.setAttribute('aria-label',`Shoes at ${shoesEl.textContent} ${/AM|PM/.test(shoesEl.textContent)?'':(S.localeAmPm||'AM/PM')}`);
     if(leaveEl) leaveEl.parentElement?.setAttribute('aria-label',`Leave at ${leaveEl.textContent}`);
+    updatePace(); renderTimeline(leave,shoes); updateMedState();
   }
 
   function updatePace(){
@@ -589,6 +890,11 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     if(label.includes('late')) state='late';
     else if(label.includes('tight')) state='tight';
     banner.classList.add(state);
+    if(lastPaceState!=null && lastPaceState!==state){
+      banner.classList.add('pulse');
+      banner.addEventListener('animationend',()=>banner.classList.remove('pulse'),{once:true});
+    }
+    lastPaceState=state;
     const dot=banner.querySelector('.status-dot');
     if(dot) dot.setAttribute('aria-label',state==='ok'?'On pace':state.charAt(0).toUpperCase()+state.slice(1));
   }
@@ -616,6 +922,8 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
       step.dataset.target=String(end.h).padStart(2,'0')+':'+String(end.m).padStart(2,'0');
 
       const tn=document.createElement('div'); tn.className='time-node num';
+      tn.textContent=timeHHMM(start);
+
       const card=document.createElement('div');
       if(t.special==='med'){
         card.className='cardlet med';
@@ -635,6 +943,7 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
           refreshTimelineStates();
         };
       } else {
+        card.className='cardlet'; card.setAttribute('role','checkbox'); card.setAttribute('aria-checked',t.done?'true':'false'); card.innerHTML=`<div class="label">${escapeHtml(t.text)}</div>`;
         const actions=document.createElement('div'); actions.className='actions';
         const del=document.createElement('button'); del.className='btn btn-ghost btn-icon'; del.setAttribute('aria-label','Delete'); del.textContent='×';
         del.onclick=()=>{ S.todos=S.todos.filter(x=>x!==t); save(); renderTimeline(L,SH); updateMedState(); };
@@ -671,10 +980,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function updateMedState(){
     const med = S.todos.find(x=>x.special==='med');
     if(!med) return;
-    const node = el.timeline.querySelector('.cardlet.med');
-    if (!node) return;
-    node.classList.remove('armed','due','late');
-    if (med.done) return;
     let target;
     if (med.abs) target = hmToMinutes(parseHM(med.abs));
     else {
@@ -692,6 +997,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     else if (diff >= 0 && diff <= 5) state = 'due';
     else if (diff > 5) state = 'late';
 
+    const node = el.timeline.querySelector('.cardlet.med');
+    if (!node) return;
+    node.classList.remove('armed','due','late');
     if (state) node.classList.add(state);
   }
 
@@ -702,6 +1010,14 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
     [["onyx","Onyx"],["peregrine","Peregrine"]].forEach(([key,label])=>{
       const card=document.createElement('div'); card.className='card';
       const h=document.createElement('h3'); h.textContent=label; card.appendChild(h);
+      const list=document.createElement('div'); list.className='backpacks-grid';
+      S.backpacks[key].forEach(item=>{
+        const btn=document.createElement('button');
+        btn.className='pack-chip';
+        btn.textContent=item.text;
+        btn.setAttribute('aria-pressed', item.done?'true':'false');
+        btn.onclick=()=>{ item.done=!item.done; btn.setAttribute('aria-pressed', item.done?'true':'false'); save(); };
+        list.appendChild(btn);
       });
       card.appendChild(list);
       fragAll.appendChild(card);
@@ -815,7 +1131,9 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   function hmToStr12(hm){ const am=hm.h<12; let h=hm.h%12; if(h===0) h=12; const m=String(hm.m).padStart(2,'0'); return `${h}:${m} ${am?'AM':'PM'}` }
   function hmToStr24(hm){ return String(hm.h).padStart(2,'0')+':'+String(hm.m).padStart(2,'0') }
   function timeHHMM(hm){ let h=hm.h%12; if(h===0) h=12; return `${h}:${String(hm.m).padStart(2,'0')}` }
-  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh} ${am?'AM':'PM'}` }
+  function formatTempC(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}\u00a0°C`; }
+  function ariaTemp(n){ const v=Math.round(Math.abs(n)); return `${n<0?'\u2212':''}${v}`; }
+  function hrLabel12(h){ const am=h<12; let hh=h%12; if(hh===0) hh=12; return `${hh}\u00a0${am?'am':'pm'}` }
   function taskStartMinutes(L,SH,t){
     if (t.range){ const [a]=t.range.replace('–','-').split('-'); return hmToMinutes(parseHM(a)); }
     if (t.abs)  return hmToMinutes(parseHM(t.abs));

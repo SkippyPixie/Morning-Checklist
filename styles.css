@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* === UI TOKENS & BASES (v2) === */
 :root{
   --canvas:#f7f3ec;    /* page bg */
@@ -12,6 +16,9 @@
 }
 
 html, body{ background:var(--canvas); color:var(--ink); }
+
+/* Typography */
+body{ font-family:'Inter', ui-sans-serif; }
 
 /* Page grid with sticky rail */
 .page{
@@ -36,21 +43,25 @@ html, body{ background:var(--canvas); color:var(--ink); }
 }
 
 /* Cards */
-.card{
+.card-surface{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:var(--space-3);
   box-shadow:0 1px 0 rgba(0,0,0,.02);
 }
-.card + .card{ margin-top:var(--space-3); }
+.card-surface + .card-surface{ margin-top:var(--space-3); }
 
 /* Section headers */
 .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2); }
 .section-title{ font-weight:600; font-size:1rem; letter-spacing:-0.01em; }
 .subhead{ font-size:.9rem; font-weight:600; margin-bottom:var(--space-2); }
 .link-action{ font-size:.875rem; text-decoration:underline; opacity:.8; background:none; border:0; cursor:pointer; }
+
 .link-action:hover{ opacity:1; text-decoration:none; }
+
+/* Utilities */
+.bg-primary { @apply bg-gray-50; }
 
 /* Inputs */
 .input-group{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:var(--space-2); }
