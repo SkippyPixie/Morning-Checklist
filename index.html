@@ -148,13 +148,6 @@ body{
   .wx-aside{order:2}
 }
 
-/* ---- Leave plan ---- */
-.settings-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.field label{ display:block; color:var(--muted); font-size:15px; margin-bottom:6px; }
-.field input{ height:48px; width:100%; border-radius:12px; border:1px solid var(--border); padding:10px 12px; font:inherit; color:var(--sepia); background:#fff; }
-.switch{ display:flex; align-items:center; gap:10px; }
-
-
 /* ---- Today strip ---- */
 .today-strip{ display:flex; justify-content:space-between; align-items:center; }
 .today-date{ font-size:28px; font-weight:900; }
@@ -266,20 +259,6 @@ small,.meta{ font-size:var(--fs-xxs); color:var(--muted); }
   background: color-mix(in oklab, #DDEBF0, #fff 60%);
   border-color: color-mix(in oklab, #B6D2DA, #000 8%);
 }
-
-/* === Leave plan ========================================================= */
-.leave-plan .label{ font-size:var(--fs-xs); color:var(--muted); margin-bottom:6px; font-weight:600; }
-.leave-form{ display:grid; grid-template-columns: 1fr 120px 120px; gap:16px; align-items:end; }
-.input{
-  background:#FFFEFD; border:1px solid var(--border);
-  border-radius:var(--radius); padding:10px 12px;
-  height:var(--field-h); text-align:center; width:100%;
-}
-.input:focus-visible{ outline:2px solid var(--sage); outline-offset:2px; }
-input[type=number]{ -moz-appearance:textfield; }
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-.hint{ color:var(--muted); font-size:var(--fs-xs); }
 
 /* === Timeline =========================================================== */
 /* merged timeline */
@@ -408,19 +387,6 @@ main,
 
 
 /* keep meds item larger and tinted */
-
-
-.leave-form{
-  display:grid; grid-template-columns:1fr 110px 110px; gap:16px; align-items:end;
-}
-.leave-form .field label{ display:block; margin:0 0 6px; font-weight:600; }
-.leave-form input[type="time"],
-.leave-form input[type="number"]{
-  height:40px; border-radius:12px; text-align:center; width:100%;
-}
-
-
-
   </style>
 </head>
 <body class="bg-primary">
@@ -483,36 +449,6 @@ main,
           <div class="hint" id="clothing" aria-live="polite">Clothing: —</div>
           <div class="hint" id="wxCached" aria-live="polite" hidden>Showing cached weather</div>
         </section>
-
-        <section class="card-surface leave-plan" aria-label="Leave plan">
-        <header class="card-head">
-          <div class="card-title">Leave plan</div>
-          <div class="tag tag-sage" id="schoolState">School day</div>
-        </header>
-        <div class="leave-form">
-          <div class="field">
-            <label for="arrival" class="label">Arrival time</label>
-            <input id="arrival" type="time" value="08:35" />
-          </div>
-          <div class="field">
-            <label for="commute" class="label">Commute (min)</label>
-            <input id="commute" type="number" min="0" step="1" value="15" />
-          </div>
-          <div class="field">
-            <label for="shoesLead" class="label">Shoes lead (min)</label>
-            <input id="shoesLead" type="number" min="0" step="1" value="5" />
-          </div>
-        </div>
-        <div class="switch" style="margin-top:10px">
-          <input id="schoolOut" type="checkbox" />
-          <label for="schoolOut">School's Out (PA day)</label>
-        </div>
-        <details class="hint leave-buffers">
-          <summary>Timing buffers</summary>
-          Buffers: rain +10, snow +15. Snow overrides rain. School's Out removes buffers.
-        </details>
-        <div class="hint" id="leaveInstr" aria-live="polite"></div>
-      </section>
 
         <section class="card-surface backpacks" aria-label="Backpacks" id="backpacks">
         <header class="card-head"><div class="card-title">Backpacks</div></header>
@@ -672,15 +608,9 @@ main,
     todayDate:document.getElementById('todayDate'),
     tShoes:document.getElementById('shoesTime'),
     tLeave:document.getElementById('leaveTime'),
-    leaveInstr:document.getElementById('leaveInstr'),
     plus5:document.getElementById('plus5'),
     wx:{ loc:document.getElementById('wxLocation'), tempVal:document.getElementById('wxTempValue'), icon:document.getElementById('wx-icon'), desc:document.getElementById('wx-desc'), feels:document.getElementById('wxFeels'), wind:document.getElementById('wxWind'), humidity:document.getElementById('wxHumidity'), rain:document.getElementById('wxRain'), hours:document.getElementById('wxHours'), cached:document.getElementById('wxCached'), clothing:document.getElementById('clothing'), updated:document.getElementById('wxUpdated') },
     wxUseLoc:document.getElementById('wxUseLoc'),
-    arrival:document.getElementById('arrival'),
-    commute:document.getElementById('commute'),
-    shoesLead:document.getElementById('shoesLead'),
-    schoolOut:document.getElementById('schoolOut'),
-    schoolState:document.getElementById('schoolState'),
     timeline:document.getElementById('timeline'),
     addTask:document.getElementById('addTask'),
     toggleDense:document.getElementById('toggleDense'),
@@ -703,23 +633,11 @@ main,
     exportBtn:document.getElementById('exportBtn')
   };
 
-  document.querySelectorAll('input[type="number"]').forEach(inp=>{
-    inp.setAttribute('inputmode','numeric');
-    inp.setAttribute('pattern','[0-9]*');
-    inp.classList.add('input');
-  });
-  el.arrival?.classList.add('input');
-
   // ---------- Init UI ----------
   el.todayDate.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  el.arrival.value=S.settings.arrival; el.commute.value=S.settings.commuteMins; el.shoesLead.value=S.settings.shoesLeadMins;
-  el.schoolOut.checked=!currentFlags().schoolDay; updateSchoolVisual();
+  updateSchoolVisual();
 
   el.plus5.onclick=()=>{currentFlags().extraBuffer+=5; save(); recomputeTimes()};
-  el.arrival.onchange=()=>{S.settings.arrival=el.arrival.value; save(); recomputeTimes()};
-  el.commute.onchange=()=>{S.settings.commuteMins=+el.commute.value; save(); recomputeTimes()};
-  el.shoesLead.onchange=()=>{S.settings.shoesLeadMins=+el.shoesLead.value; save(); recomputeTimes()};
-  el.schoolOut.onchange=()=>{currentFlags().schoolDay=!el.schoolOut.checked; save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks()};
   el.resetPacks.onclick=()=>{['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); save(); renderBackpacks()};
   el.helpBtn.onclick=()=>el.helpPopover.toggleAttribute('hidden');
   el.exportBtn.onclick=exportJSON;
@@ -765,7 +683,7 @@ main,
   // ---------- Day flags & rollover ----------
   function currentFlags(){ const d=todayLocalISO(); if(!S.dayFlags[d]) S.dayFlags[d]={schoolDay:true,extraBuffer:0}; return S.dayFlags[d] }
   function dailyRollover(){ const d=todayLocalISO(); if(S.meta.lastOpen!==d){ S.todos.forEach(t=>t.done=false); ['onyx','peregrine'].forEach(k=>S.backpacks[k].forEach(i=>i.done=false)); S.dayFlags[d]={schoolDay:true,extraBuffer:0}; S.meta.lastOpen=d; save() }}
-  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); el.schoolState.textContent=sd?'School day':"School's Out"; }
+  function updateSchoolVisual(){ const sd=currentFlags().schoolDay; el.schoolChip.setAttribute('aria-pressed', String(sd)); if(el.schoolState) el.schoolState.textContent=sd?'School day':"School's Out"; }
 
   // ---------- Weather ----------
   function hourIndex(times,h){ const d=todayLocalISO()+"T"; const hh=String(h).padStart(2,'0'); for(let i=0;i<times.length;i++){ if(times[i].startsWith(d)&&times[i].slice(11,16)===hh+':00') return i } return -1 }
@@ -863,10 +781,6 @@ main,
     const shoes=minutesToHM(hmToMinutes(leave)-shoesLead);
     const leaveStr12=hmToStr12(leave); const shoesStr12=hmToStr12(shoes);
     el.tLeave.textContent=leaveStr12; el.tShoes.textContent=shoesStr12;
-    if(el.leaveInstr){
-      const leaveStr=leaveStr12.slice(0,-3); const shoesStr=shoesStr12.slice(0,-3);
-      el.leaveInstr.textContent=`Start shoes by ${shoesStr} to leave ${leaveStr}`;
-    }
     const shoesEl=document.getElementById('shoesTime');
     const leaveEl=document.getElementById('leaveTime');
     [shoesEl,leaveEl].forEach(el=>el&&el.closest('.times')?.classList.add('num'));
@@ -1023,7 +937,7 @@ main,
       fragAll.appendChild(card);
     });
     grid.appendChild(fragAll);
-    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; el.schoolState.textContent=dim?"School's Out":"School day";
+    const dim=!currentFlags().schoolDay; el.packs.style.opacity=dim?0.5:1; if(el.schoolState) el.schoolState.textContent=dim?"School's Out":"School day";
   }
 
   // ---------- Rules -> chips ----------
@@ -1114,7 +1028,6 @@ main,
     const current = el.schoolChip.getAttribute('aria-pressed')==='true';
     el.schoolChip.setAttribute('aria-pressed', String(!current));
     currentFlags().schoolDay=!current;
-    el.schoolOut.checked = !currentFlags().schoolDay;
     save(); updateSchoolVisual(); recomputeTimes(); renderBackpacks();
   }
 
