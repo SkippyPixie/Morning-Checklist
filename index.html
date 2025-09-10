@@ -448,7 +448,7 @@ main,
             <span class="pace-text">On pace</span>
           </div>
           <div class="times">
-            <span>Shoes <span id="shoesTime">8:25 AM</span></span> • <span>Leave <span id="leaveTime">8:30 AM</span></span>
+            <span>Shoes <span id="shoesTime">8:15 AM</span></span> • <span>Leave <span id="leaveTime">8:20 AM</span></span>
           </div>
           <button id="plus5" class="btn-plus" title="Add 5 min buffer">+5</button>
         </section>
@@ -492,7 +492,7 @@ main,
         <div class="leave-form">
           <div class="field">
             <label for="arrival" class="label">Arrival time</label>
-            <input id="arrival" type="time" value="08:45" />
+            <input id="arrival" type="time" value="08:35" />
           </div>
           <div class="field">
             <label for="commute" class="label">Commute (min)</label>
@@ -593,7 +593,7 @@ main,
 
   // ---------- Default state ----------
   const DEFAULT_STATE={
-    settings:{ arrival:'08:45', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
+    settings:{ arrival:'08:35', commuteMins:15, shoesLeadMins:5, lat:43.2557, lon:-79.8711, place:'Hamilton' },
     wx:{now:null,feels:null,wind:null,humidity:null,rain:null,code:null,desc:'',hours:[],lastUpdated:null},
     events:[],
     backpacks:{
@@ -601,17 +601,16 @@ main,
       peregrine:[{text:'Lunch',done:false},{text:'Love note',done:false},{text:'Water bottle',done:false},{text:'Forms',done:false},{text:'Agenda',done:false}]
     },
     todos:[
-      {id:'t1', text:'Breakfast — everyone', done:false, abs:'06:45'},
-      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'07:05'},
-      {id:'t3', text:'Toothbrushing — everyone', done:false, abs:'07:15'},
-      {id:'t4', text:'Ask Siri for today’s weather — Peregrine', done:false, abs:'07:20'},
-      {id:'t5', text:'Get dressed — everyone', done:false, abs:'07:25'},
-      {id:'t6', text:'Hairbrushing — Peregrine', done:false, abs:'07:35'},
-      {id:'t7', text:'Hairbrushing — Onyx', done:false, abs:'07:45'},
-      {id:'t8', text:'Peregrine — medication 0.25 mg', done:false, abs:'08:15', special:'med'},
+      {id:'t1', text:'Breakfast', done:false, abs:'06:35'},
+      {id:'t2', text:'Check calendar (forms/special events)', done:false, abs:'06:55'},
+      {id:'t3', text:'Toothbrushing', done:false, abs:'07:05'},
+      {id:'t4', text:'Ask Siri for today’s weather', done:false, abs:'07:10'},
+      {id:'t5', text:'Get dressed', done:false, abs:'07:15'},
+      {id:'t6', text:'Hairbrushing', done:false, range:'07:25-07:35'},
+      {id:'t8', text:'Peregrine medication', done:false, abs:'08:05', special:'med'},
       {id:'t9', text:'Pack lunches & water bottles', done:false, rel:'leave', offset:-9},
       {id:'t10', text:'Shoes on', done:false, rel:'shoes', offset:0},
-      {id:'t11', text:'Bathroom — right before leave', done:false, rel:'leave', offset:-3},
+      {id:'t11', text:'Bathroom', done:false, rel:'leave', offset:-3},
       {id:'t12', text:'Leave', done:false, rel:'leave', offset:0}
     ],
     dayFlags:{[todayLocalISO()]:{schoolDay:true,extraBuffer:0}},
